@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useGateMasterStore } from './hooks/useGateMasterStore';
+import { usePersistence } from './hooks/usePersistence';
 import { Header } from './components/Header';
 import { LinearAlgebraView } from './components/linear-algebra/LinearAlgebraView';
 import { DigitalLogicView } from './components/digital-logic/DigitalLogicView';
@@ -21,10 +22,23 @@ export const App: React.FC = () => {
     halfAdderOutputs,
     laChallengeSolved,
     dlChallengeSolved,
+    setLaChallengeSolved,
+    setDlChallengeSolved,
     totalScore,
     showCelebration,
     celebrationMessage,
   } = useGateMasterStore();
+
+  const handleHydrate = useCallback((saved: { laSolved: boolean; dlSolved: boolean }) => {
+    if (saved.laSolved) setLaChallengeSolved(true);
+    if (saved.dlSolved) setDlChallengeSolved(true);
+  }, [setLaChallengeSolved, setDlChallengeSolved]);
+
+  const { syncStatus } = usePersistence(
+    laChallengeSolved,
+    dlChallengeSolved,
+    handleHydrate
+  );
 
   return (
     <div className="app-container">
@@ -41,7 +55,7 @@ export const App: React.FC = () => {
         mode={mode}
         setMode={setMode}
         totalScore={totalScore}
-        syncStatus="local_only"
+        syncStatus={syncStatus}
       />
 
       {/* Main Views */}
