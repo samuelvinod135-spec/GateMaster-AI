@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GateMaster AI — App Map & Architectural Guide</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131c31;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+      --cyan: #06b6d4;
+      --magenta: #ec4899;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 2rem 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    h1 { font-size: 1.75rem; color: #fff; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.25rem; color: var(--cyan); margin: 1.75rem 0 0.75rem 0; }
+    p { color: var(--text-muted); margin-bottom: 1rem; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .diagram-container {
+      background: #060913;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin: 1.25rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+    svg text { font-family: var(--font-mono); }
+    ul { list-style: none; padding: 0; }
+    li {
+      margin-bottom: 0.75rem;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+    li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+    }
+    code {
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.15rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      color: #38bdf8;
+    }
+    details {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GateMaster AI — App Map & Architectural Guide <span class="badge">v0.1.0 PoC</span></h1>
+    <p>A compact technical reference and data flow map for the interactive Linear Algebra & Digital Logic Dual-Engine sandbox.</p>
+  </header>
+
+  <section class="card">
+    <h2>1. Data Flow & State Decoupling</h2>
+    <p>GateMaster AI achieves 60 FPS canvas performance by decoupling high-frequency continuous render frames from event-driven backend persistence:</p>
+    
+    <div class="diagram-container">
+      <svg viewBox="0 0 760 170" width="100%" height="170" xmlns="http://www.w3.org/2000/svg">
+        <!-- Node 1: User Input -->
+        <rect x="10" y="55" width="130" height="60" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="75" y="82" fill="#f8fafc" font-size="11" text-anchor="middle" font-weight="bold">User Drag / Toggle</text>
+        <text x="75" y="98" fill="#94a3b8" font-size="9" text-anchor="middle">Sliders / Switches</text>
+
+        <!-- Arrow 1 -> 2 -->
+        <path d="M 140 85 L 180 85" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Node 2: In-Memory Store -->
+        <rect x="180" y="55" width="150" height="60" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="255" y="82" fill="#f8fafc" font-size="11" text-anchor="middle" font-weight="bold">useGateMasterStore</text>
+        <text x="255" y="98" fill="#94a3b8" font-size="9" text-anchor="middle">In-Memory 60 FPS State</text>
+
+        <!-- Branch to Canvas -->
+        <path d="M 330 75 L 390 40 L 410 40" stroke="#10b981" stroke-width="1.5"/>
+
+        <!-- Node 3A: Canvas Render Loop -->
+        <rect x="410" y="15" width="160" height="50" rx="8" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+        <text x="490" y="37" fill="#34d399" font-size="11" text-anchor="middle" font-weight="bold">HTML5 Canvas (rAF)</text>
+        <text x="490" y="52" fill="#94a3b8" font-size="9" text-anchor="middle">Direct GPU / 2D Context</text>
+
+        <!-- Branch to Persistence -->
+        <path d="M 330 95 L 390 130 L 410 130" stroke="#f59e0b" stroke-width="1.5"/>
+
+        <!-- Node 3B: Event-Driven Persistence -->
+        <rect x="410" y="105" width="160" height="50" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="490" y="127" fill="#fbbf24" font-size="11" text-anchor="middle" font-weight="bold">Challenge Solved Event</text>
+        <text x="490" y="142" fill="#94a3b8" font-size="9" text-anchor="middle">Discrete State Transition</text>
+
+        <!-- Arrow to Storage -->
+        <path d="M 570 130 L 610 130" stroke="#f59e0b" stroke-width="1.5"/>
+
+        <!-- Node 4: Storage -->
+        <rect x="610" y="105" width="140" height="50" rx="8" fill="#1e293b" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="680" y="127" fill="#f472b6" font-size="11" text-anchor="middle" font-weight="bold">localStorage + Cloud</text>
+        <text x="680" y="142" fill="#94a3b8" font-size="9" text-anchor="middle">Supabase Async Upsert</text>
+      </svg>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Code Tour Route (Key Locations)</h2>
+    <ul>
+      <li>
+        <strong>Stop 1: Reactive State Store</strong> — <code>src/hooks/useGateMasterStore.ts</code><br>
+        Manages the 2x2 matrix values, Boolean inputs, and triggers celebratory confetti when mathematical conditions (determinant = 0 or carry generated) are met.
+      </li>
+      <li>
+        <strong>Stop 2A: Linear Algebra Renderer</strong> — <code>src/components/linear-algebra/VectorCanvas.tsx</code><br>
+        Executes native 2D affine matrix transformations on coordinate points, draws glowing basis vectors î and ĵ, and paints the shaded determinant parallelogram.
+      </li>
+      <li>
+        <strong>Stop 2B: Digital Logic Circuit Renderer</strong> — <code>src/components/digital-logic/CircuitCanvas.tsx</code><br>
+        Draws the Half-Adder schematic (XOR & AND gates) with animated electric wire glow and dynamic Sum/Carry LED status rings.
+      </li>
+      <li>
+        <strong>Stop 3: Resilient Persistence Hook</strong> — <code>src/hooks/usePersistence.ts</code><br>
+        Generates anonymous session UUIDs, writes immediately to browser <code>localStorage</code>, and executes background cloud sync to Supabase without blocking the UI.
+      </li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>3. "To Change This, Start Here"</h2>
+    <details>
+      <summary>Add a new Matrix Preset (e.g., Reflection or 45° Rotation)</summary>
+      <p style="margin-top: 0.5rem;">Open <code>src/components/linear-algebra/LinearAlgebraControls.tsx</code> and add a new button inside the <code>presets-group</code> calling <code>loadMatrixPreset({ a, b, c, d })</code>.</p>
+    </details>
+    <details>
+      <summary>Add a Full-Adder Circuit or OR Gate</summary>
+      <p style="margin-top: 0.5rem;">Open <code>src/components/digital-logic/CircuitCanvas.tsx</code>. Extend the wire geometry and gate drawing helpers (like <code>drawXORGate</code> and <code>drawANDGate</code>) to accept a third Carry-In input.</p>
+    </details>
+    <details>
+      <summary>Connect to your Live Supabase Project</summary>
+      <p style="margin-top: 0.5rem;">Create a <code>.env</code> file in the project root with <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>. The client in <code>src/lib/supabase.ts</code> will automatically detect it.</p>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>4. A Practice to Reuse</h2>
+    <p><strong>Separating High-Frequency Rendering from State Persistence:</strong> When building interactive visualizers, never tie network requests or heavy React re-renders directly to drag/pointer events. Maintain high-frequency updates in local frame-rate loops, and restrict cloud sync to discrete, meaningful state milestones (like challenge victories or level completions).</p>
+  </section>
+
+  <footer style="margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; text-align: center;">
+    GateMaster AI • Built for Devpost Learn: Build With AI: Basics • Tested on Localhost:5173
+  </footer>
+</body>
+</html>
