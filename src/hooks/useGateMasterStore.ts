@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import confetti from 'canvas-confetti';
 import { Matrix2x2, LogicInputs, EngineMode, HalfAdderOutputs } from '../types';
 import { calculateDeterminant, isDeterminantZero } from '../lib/math';
 
@@ -13,6 +14,19 @@ export const INITIAL_LOGIC: LogicInputs = {
   a: false,
   b: false,
 };
+
+function fireConfetti() {
+  try {
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.3 },
+      colors: ['#06b6d4', '#ec4899', '#10b981', '#fbbf24'],
+    });
+  } catch (e) {
+    // Graceful fallback if window or canvas not available
+  }
+}
 
 export function useGateMasterStore() {
   const [mode, setMode] = useState<EngineMode>('linear-algebra');
@@ -34,6 +48,7 @@ export function useGateMasterStore() {
         setLaChallengeSolved(true);
         setCelebrationMessage('Challenge Solved! 2D Space Collapsed! 🎉');
         setShowCelebration(true);
+        fireConfetti();
         setTimeout(() => setShowCelebration(false), 3500);
       }
       return next;
@@ -47,6 +62,7 @@ export function useGateMasterStore() {
       setLaChallengeSolved(true);
       setCelebrationMessage('Challenge Solved! 2D Space Collapsed! 🎉');
       setShowCelebration(true);
+      fireConfetti();
       setTimeout(() => setShowCelebration(false), 3500);
     }
   }, [laChallengeSolved]);
@@ -65,6 +81,7 @@ export function useGateMasterStore() {
         setDlChallengeSolved(true);
         setCelebrationMessage('Challenge Solved! Carry Bit Generated! 🎉');
         setShowCelebration(true);
+        fireConfetti();
         setTimeout(() => setShowCelebration(false), 3500);
       }
       return next;

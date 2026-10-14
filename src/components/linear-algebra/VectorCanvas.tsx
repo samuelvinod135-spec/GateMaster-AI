@@ -200,13 +200,38 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
     ctx.arc(originX, originY, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    // 7. Space Collapse Visual Indicator
+    // 7. Space Collapse Visual Indicator & 1D Subspace Line
     if (isCollapsed) {
       ctx.save();
-      ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+
+      // Find the dominant vector direction for the 1D subspace
+      const dirX = Math.abs(matrix.a) > 0.1 || Math.abs(matrix.c) > 0.1 ? matrix.a : matrix.b;
+      const dirY = Math.abs(matrix.a) > 0.1 || Math.abs(matrix.c) > 0.1 ? matrix.c : matrix.d;
+      const mag = Math.sqrt(dirX * dirX + dirY * dirY);
+
+      if (mag > 0.05) {
+        const normX = dirX / mag;
+        const normY = dirY / mag;
+        const lineDist = 20;
+
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([8, 6]);
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.8)';
+        ctx.shadowBlur = 12;
+
+        ctx.beginPath();
+        ctx.moveTo(toCanvasX(-normX * lineDist), toCanvasY(-normY * lineDist));
+        ctx.lineTo(toCanvasX(normX * lineDist), toCanvasY(normY * lineDist));
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.95)';
       ctx.font = '700 14px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('⚡ DIMENSION COLLAPSED (det = 0) ⚡', originX, 40);
+      ctx.shadowColor = 'rgba(239, 68, 68, 0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fillText('⚡ 2D SPACE COLLAPSED INTO 1D LINE (det = 0) ⚡', originX, 42);
       ctx.restore();
     }
 
