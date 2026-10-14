@@ -2,6 +2,7 @@ import React from 'react';
 import { useGateMasterStore } from './hooks/useGateMasterStore';
 import { Header } from './components/Header';
 import { LinearAlgebraView } from './components/linear-algebra/LinearAlgebraView';
+import { DigitalLogicView } from './components/digital-logic/DigitalLogicView';
 import { Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -14,7 +15,12 @@ export const App: React.FC = () => {
     resetMatrix,
     determinant,
     isCollapsed,
+    logicInputs,
+    toggleLogicInput,
+    resetLogic,
+    halfAdderOutputs,
     laChallengeSolved,
+    dlChallengeSolved,
     totalScore,
     showCelebration,
     celebrationMessage,
@@ -50,14 +56,13 @@ export const App: React.FC = () => {
           isSolved={laChallengeSolved}
         />
       ) : (
-        <div className="main-content">
-          <div className="card" style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center' }}>
-            <h2 style={{ marginBottom: '1rem', color: 'var(--cyan-primary)' }}>Digital Logic Mode</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Half-Adder Schematic and interactive Truth Table will be activated in Slice 3!
-            </p>
-          </div>
-        </div>
+        <DigitalLogicView
+          inputs={logicInputs}
+          outputs={halfAdderOutputs}
+          toggleInput={toggleLogicInput}
+          resetLogic={resetLogic}
+          isSolved={dlChallengeSolved}
+        />
       )}
     </div>
   );
