@@ -5,3 +5,9 @@
 .env
 .env.*
 !.env.example
+
+# Build and dependencies
+node_modules/
+dist/
+*.local
+.DS_Store
