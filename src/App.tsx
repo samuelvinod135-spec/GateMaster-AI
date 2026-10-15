@@ -1,15 +1,18 @@
-import React, { useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { AppView } from './types';
 import { useGateMasterStore } from './hooks/useGateMasterStore';
 import { usePersistence } from './hooks/usePersistence';
 import { Header } from './components/Header';
+import { DashboardView } from './components/dashboard/DashboardView';
 import { LinearAlgebraView } from './components/linear-algebra/LinearAlgebraView';
 import { DigitalLogicView } from './components/digital-logic/DigitalLogicView';
-import { Sparkles } from 'lucide-react';
+import { HackathonDocsView } from './components/docs/HackathonDocsView';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const [currentView, setView] = useState<AppView>('dashboard');
+
   const {
-    mode,
-    setMode,
     matrix,
     updateMatrixCell,
     loadMatrixPreset,
@@ -50,34 +53,73 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Header with Navigation and Scores */}
+      {/* Persistent Header */}
       <Header
-        mode={mode}
-        setMode={setMode}
+        currentView={currentView}
+        setView={setView}
         totalScore={totalScore}
         syncStatus={syncStatus}
       />
 
-      {/* Main Views */}
-      {mode === 'linear-algebra' ? (
-        <LinearAlgebraView
-          matrix={matrix}
-          updateMatrixCell={updateMatrixCell}
-          loadMatrixPreset={loadMatrixPreset}
-          resetMatrix={resetMatrix}
-          determinant={determinant}
-          isCollapsed={isCollapsed}
-          isSolved={laChallengeSolved}
-        />
-      ) : (
-        <DigitalLogicView
-          inputs={logicInputs}
-          outputs={halfAdderOutputs}
-          toggleInput={toggleLogicInput}
-          resetLogic={resetLogic}
-          isSolved={dlChallengeSolved}
-        />
-      )}
+      {/* Main View Router */}
+      <main className="view-content-wrapper">
+        {currentView === 'dashboard' && (
+          <DashboardView
+            setView={setView}
+            laSolved={laChallengeSolved}
+            dlSolved={dlChallengeSolved}
+            totalScore={totalScore}
+          />
+        )}
+
+        {currentView === 'linear-algebra' && (
+          <div className="sandbox-wrapper">
+            <div className="sandbox-top-bar">
+              <button onClick={() => setView('dashboard')} className="sub-back-btn">
+                <ArrowLeft size={14} />
+                <span>Dashboard</span>
+              </button>
+              <div className="sandbox-title-tag">
+                <span>LINEAR ALGEBRA 2D VECTOR SANDBOX</span>
+              </div>
+            </div>
+            <LinearAlgebraView
+              matrix={matrix}
+              updateMatrixCell={updateMatrixCell}
+              loadMatrixPreset={loadMatrixPreset}
+              resetMatrix={resetMatrix}
+              determinant={determinant}
+              isCollapsed={isCollapsed}
+              isSolved={laChallengeSolved}
+            />
+          </div>
+        )}
+
+        {currentView === 'digital-logic' && (
+          <div className="sandbox-wrapper">
+            <div className="sandbox-top-bar">
+              <button onClick={() => setView('dashboard')} className="sub-back-btn">
+                <ArrowLeft size={14} />
+                <span>Dashboard</span>
+              </button>
+              <div className="sandbox-title-tag yellow">
+                <span>DIGITAL LOGIC HALF-ADDER CIRCUIT SANDBOX</span>
+              </div>
+            </div>
+            <DigitalLogicView
+              inputs={logicInputs}
+              outputs={halfAdderOutputs}
+              toggleInput={toggleLogicInput}
+              resetLogic={resetLogic}
+              isSolved={dlChallengeSolved}
+            />
+          </div>
+        )}
+
+        {currentView === 'docs' && (
+          <HackathonDocsView setView={setView} />
+        )}
+      </main>
     </div>
   );
 };

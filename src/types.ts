@@ -1,3 +1,5 @@
+export type AppView = 'dashboard' | 'linear-algebra' | 'digital-logic' | 'docs';
+
 export type EngineMode = 'linear-algebra' | 'digital-logic';
 
 export interface Matrix2x2 {

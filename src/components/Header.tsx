@@ -1,56 +1,84 @@
 import React from 'react';
-import { EngineMode, SyncStatus } from '../types';
-import { Network, Grid, Trophy, Cloud, HardDrive, Check } from 'lucide-react';
+import { AppView, SyncStatus } from '../types';
+import { Network, Grid, Trophy, Cloud, HardDrive, Home, FileCode } from 'lucide-react';
 
 interface HeaderProps {
-  mode: EngineMode;
-  setMode: (mode: EngineMode) => void;
+  currentView: AppView;
+  setView: (view: AppView) => void;
   totalScore: number;
   syncStatus: SyncStatus;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  mode,
-  setMode,
+  currentView,
+  setView,
   totalScore,
   syncStatus,
 }) => {
   return (
     <header className="app-header">
       {/* Brand Section */}
-      <div className="brand-section">
+      <div
+        className="brand-section"
+        onClick={() => setView('dashboard')}
+        style={{ cursor: 'pointer' }}
+        role="button"
+        tabIndex={0}
+      >
         <div className="brand-icon-box">
-          <Network size={22} />
+          <Network size={20} />
         </div>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h1 className="brand-title">GateMaster AI</h1>
+            <span className="brand-title">GateMaster AI</span>
             <span className="brand-tag">Dual Sandbox</span>
           </div>
         </div>
       </div>
 
-      {/* Mode Switcher Tabs */}
+      {/* View Navigation Tabs */}
       <nav className="mode-tabs">
         <button
-          className={`mode-tab-btn ${mode === 'linear-algebra' ? 'active' : ''}`}
-          onClick={() => setMode('linear-algebra')}
+          className={`mode-tab-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setView('dashboard')}
         >
-          <Grid size={16} />
+          <Home size={15} />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          className={`mode-tab-btn ${currentView === 'linear-algebra' ? 'active' : ''}`}
+          onClick={() => setView('linear-algebra')}
+        >
+          <Grid size={15} />
           <span>Linear Algebra</span>
         </button>
+
         <button
-          className={`mode-tab-btn ${mode === 'digital-logic' ? 'active' : ''}`}
-          onClick={() => setMode('digital-logic')}
+          className={`mode-tab-btn ${currentView === 'digital-logic' ? 'active' : ''}`}
+          onClick={() => setView('digital-logic')}
         >
-          <Network size={16} />
+          <Network size={15} />
           <span>Digital Logic</span>
+        </button>
+
+        <button
+          className={`mode-tab-btn ${currentView === 'docs' ? 'active' : ''}`}
+          onClick={() => setView('docs')}
+        >
+          <FileCode size={15} />
+          <span>Architecture &amp; Docs</span>
         </button>
       </nav>
 
       {/* Header Right Badges */}
       <div className="header-badges">
-        <div className="score-badge" title="Completed Challenges">
+        <div
+          className="score-badge"
+          title="Completed Challenges"
+          onClick={() => setView('dashboard')}
+          style={{ cursor: 'pointer' }}
+        >
           <Trophy size={14} />
           <span>{totalScore}/2 ⭐</span>
         </div>
