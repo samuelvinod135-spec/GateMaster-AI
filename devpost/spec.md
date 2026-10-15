@@ -116,6 +116,10 @@ All user interactions operate at 60 FPS in memory. When a micro-challenge condit
 - **What it does:** Displays the active objective for the current mode, completion checkmark, and animates the slide-in success banner when the goal is reached.
 - **PRD ref:** `prd.md > Features and Behavior > 3. "Break It to Learn It" Micro-Challenges`.
 
+### 10. `AIProblemBox`
+- **What it does:** Interactive natural language concept query box and step-by-step visual tutor. Prompts an LLM through Supabase Edge Function `solve-problem` (or offline fallback), validates with Zod, and renders a step-by-step stepper that updates the canvases live. Includes a "Weak Topics" concept frequency tracker and a "Try It Yourself" interactive handoff.
+- **PRD ref:** `prd.md > Features and Behavior > 5. AI Problem Box & Concept Tutor`.
+
 ---
 
 ## Data Model & State Architecture

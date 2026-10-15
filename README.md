@@ -19,7 +19,14 @@ GateMaster AI is an interactive educational sandbox built for first-year enginee
 - **Reactive Truth Table:** Synchronized truth table highlighting the active binary combination row in real time.
 - **Sum & Carry Output LEDs:** Visual status indicators reacting dynamically to logic gate computations.
 
-### 3. "Break It to Learn It" Micro-Challenges & Resilient Sync
+### 3. AI Problem Box & Concept Tutor
+- **Structured Concept Solving:** Type any student query (e.g., *"rotate 90 degrees then shear"*, *"design a half adder"*, *"what does a determinant of 0 mean"*).
+- **Zero Code Rule:** The LLM returns structured JSON only, strictly validated by Zod against `AIProblemResponseSchema`. It never generates or executes code.
+- **Interactive Step-by-Step Stepper:** Walks through mathematical transformations step-by-step, animating the canvas dynamically.
+- **Try It Yourself:** Leaves the canvas fully interactive after the explanation.
+- **Offline Resilience & Weak Topics:** Features local caching for instant responses and a concept tracker that aggregates the student's top-queried topics.
+
+### 4. "Break It to Learn It" Micro-Challenges & Resilient Sync
 - Interactive mini-challenges for both engines (Space Collapse and Carry Bit Generation).
 - Decoupled state architecture: 60 FPS local render loop + event-driven persistence.
 - Zero-friction instant guest access: Progress and scores cached locally in `localStorage` and synced asynchronously to Supabase cloud via an anonymous session UUID.
@@ -28,10 +35,11 @@ GateMaster AI is an interactive educational sandbox built for first-year enginee
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React 18, TypeScript, Vite
+- **Frontend:** React 18, TypeScript 5, Vite, Zod
+- **Testing:** Vitest
 - **Rendering:** Native HTML5 Canvas 2D Context (High-DPI retina scaled)
-- **Styling:** Vanilla CSS Custom Properties (Dark neon theme, *Inter* & *JetBrains Mono*)
-- **Backend & Cloud:** `@supabase/supabase-js` (REST API upsert with anonymous guest sessions)
+- **Styling:** Vanilla CSS Custom Properties (3-tone palette, *Inter* & *JetBrains Mono*)
+- **Backend & Cloud:** Supabase (Client SDK, Edge Functions with Deno runtime, PostgreSQL with RLS)
 - **Icons & Effects:** `lucide-react`, `canvas-confetti`
 
 ---
@@ -45,27 +53,45 @@ GateMaster AI is an interactive educational sandbox built for first-year enginee
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/gatemaster-ai.git
+git clone https://github.com/samuelvinod135-spec/GateMaster-AI.git
 
 # Navigate into the project directory
-cd gatemaster-ai
+cd GateMaster-AI
 
 # Install dependencies
 npm install
 
 # Start the development server
 npm run dev
+
+# Run unit tests
+npm test
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser to start exploring!
 
-### (Optional) Configure Supabase Cloud Sync
-To connect your own Supabase database, create a `.env` file in the root directory:
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-*(If omitted, GateMaster AI automatically falls back to browser `localStorage`, ensuring 100% of features remain functional offline.)*
+### Environment Configuration & Edge Function
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Configure your Supabase project keys in `.env`:
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+3. Deploy the Edge Function to Supabase:
+   ```bash
+   # Set the server-side LLM secret (never exposed in frontend)
+   supabase secrets set GEMINI_API_KEY=your-key-here
+   # or
+   supabase secrets set OPENAI_API_KEY=your-key-here
+
+   # Deploy the solve-problem function
+   supabase functions deploy solve-problem
+   ```
+*(If unconfigured, GateMaster AI automatically falls back to local storage and pre-cached demo responses, ensuring 100% of the UI works offline.)*
 
 ---
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { AppView } from '../../types';
+import { AppView, Matrix2x2, LogicInputs } from '../../types';
+import { AIProblemBox } from '../ai/AIProblemBox';
 import { Grid, Network, Trophy, Cpu, Zap, Cloud, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -7,6 +8,8 @@ interface DashboardViewProps {
   laSolved: boolean;
   dlSolved: boolean;
   totalScore: number;
+  loadMatrixPreset: (preset: Matrix2x2) => void;
+  setLogicInputsState: (inputs: LogicInputs) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -14,6 +17,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   laSolved,
   dlSolved,
   totalScore,
+  loadMatrixPreset,
+  setLogicInputsState,
 }) => {
   return (
     <div className="dashboard-container">
@@ -93,6 +98,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Resilient <span className="stat-subtext">LocalStorage + Supabase</span>
           </div>
         </div>
+      </section>
+
+      {/* AI Problem Box: Structured Interactive Tutor */}
+      <section className="ai-feature-section">
+        <AIProblemBox
+          currentView="dashboard"
+          setView={setView}
+          loadMatrixPreset={loadMatrixPreset}
+          setLogicInputsState={setLogicInputsState}
+        />
       </section>
 
       {/* Dual Engine Launch Cards */}

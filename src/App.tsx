@@ -7,10 +7,12 @@ import { DashboardView } from './components/dashboard/DashboardView';
 import { LinearAlgebraView } from './components/linear-algebra/LinearAlgebraView';
 import { DigitalLogicView } from './components/digital-logic/DigitalLogicView';
 import { HackathonDocsView } from './components/docs/HackathonDocsView';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { AIProblemBox } from './components/ai/AIProblemBox';
+import { Sparkles, ArrowLeft, Bot } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentView, setView] = useState<AppView>('dashboard');
+  const [showSandboxAiTutor, setShowSandboxAiTutor] = useState<boolean>(false);
 
   const {
     matrix,
@@ -21,6 +23,7 @@ export const App: React.FC = () => {
     isCollapsed,
     logicInputs,
     toggleLogicInput,
+    setLogicInputsState,
     resetLogic,
     halfAdderOutputs,
     laChallengeSolved,
@@ -69,6 +72,8 @@ export const App: React.FC = () => {
             laSolved={laChallengeSolved}
             dlSolved={dlChallengeSolved}
             totalScore={totalScore}
+            loadMatrixPreset={loadMatrixPreset}
+            setLogicInputsState={setLogicInputsState}
           />
         )}
 
@@ -82,7 +87,28 @@ export const App: React.FC = () => {
               <div className="sandbox-title-tag">
                 <span>LINEAR ALGEBRA 2D VECTOR SANDBOX</span>
               </div>
+              <button
+                onClick={() => setShowSandboxAiTutor((prev) => !prev)}
+                className={`sandbox-ai-toggle-btn ${showSandboxAiTutor ? 'active' : ''}`}
+                title="Toggle AI Problem Solver & Tutor"
+              >
+                <Bot size={14} />
+                <span>{showSandboxAiTutor ? 'Hide AI Tutor' : 'Ask AI Tutor'}</span>
+              </button>
             </div>
+
+            {showSandboxAiTutor && (
+              <div className="sandbox-ai-drawer">
+                <AIProblemBox
+                  currentView={currentView}
+                  setView={setView}
+                  loadMatrixPreset={loadMatrixPreset}
+                  setLogicInputsState={setLogicInputsState}
+                  onClose={() => setShowSandboxAiTutor(false)}
+                />
+              </div>
+            )}
+
             <LinearAlgebraView
               matrix={matrix}
               updateMatrixCell={updateMatrixCell}
@@ -105,7 +131,28 @@ export const App: React.FC = () => {
               <div className="sandbox-title-tag yellow">
                 <span>DIGITAL LOGIC HALF-ADDER CIRCUIT SANDBOX</span>
               </div>
+              <button
+                onClick={() => setShowSandboxAiTutor((prev) => !prev)}
+                className={`sandbox-ai-toggle-btn yellow ${showSandboxAiTutor ? 'active' : ''}`}
+                title="Toggle AI Problem Solver & Tutor"
+              >
+                <Bot size={14} />
+                <span>{showSandboxAiTutor ? 'Hide AI Tutor' : 'Ask AI Tutor'}</span>
+              </button>
             </div>
+
+            {showSandboxAiTutor && (
+              <div className="sandbox-ai-drawer">
+                <AIProblemBox
+                  currentView={currentView}
+                  setView={setView}
+                  loadMatrixPreset={loadMatrixPreset}
+                  setLogicInputsState={setLogicInputsState}
+                  onClose={() => setShowSandboxAiTutor(false)}
+                />
+              </div>
+            )}
+
             <DigitalLogicView
               inputs={logicInputs}
               outputs={halfAdderOutputs}

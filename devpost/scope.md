@@ -48,6 +48,11 @@ A 60-second end-to-end demo:
 - **Micro-Challenge & Persistence:**
   - One interactive puzzle per engine (e.g., "Collapse the Grid", "Generate Carry Bit").
   - Supabase client integration storing completed challenge statuses and scores.
+- **AI Problem Box (Concept Tutor):**
+  - Natural language concept and problem query input validated strictly with Zod.
+  - Serverless Edge Function `solve-problem` returning structured JSON only (never code).
+  - Stepper walkthrough mapping multi-step visual proofs live onto existing Canvas engines.
+  - Offline demo caching for instant responses and weak-topic tracking.
 
 ## Later
 - 3D matrix transformations (3x3 determinant, eigenvalues, eigenvectors).
@@ -55,5 +60,5 @@ A 60-second end-to-end demo:
 - Full user authentication, historical analytics, and classroom leaderboards.
 
 ## Explicitly Cut
-- **Free-form Natural Language / Photo Homework Parsing:** Cut in favor of fast presets and direct inputs. Parsing unconstrained text with an LLM introduces latency, cost, and API failure modes without adding value to the core visual intuition loop.
+- **Unstructured / Code-Generating LLM Outputs:** Cut. The AI tutor is strictly constrained to return structured data matching a Zod schema; it never generates, evaluates, or returns executable code.
 - **Complex Sequential Circuit Simulation (Clocks, Latches):** Cut to keep the PoC achievable in 2–4 hours while focusing on rock-solid combinational logic visualization.

@@ -88,6 +88,18 @@ export function useGateMasterStore() {
     });
   }, [dlChallengeSolved]);
 
+  const setLogicInputsState = useCallback((inputs: LogicInputs) => {
+    setLogicInputs(inputs);
+    const carry = inputs.a && inputs.b;
+    if (carry && !dlChallengeSolved) {
+      setDlChallengeSolved(true);
+      setCelebrationMessage('Challenge Solved! Carry Bit Generated! 🎉');
+      setShowCelebration(true);
+      fireConfetti();
+      setTimeout(() => setShowCelebration(false), 3500);
+    }
+  }, [dlChallengeSolved]);
+
   const resetLogic = useCallback(() => {
     setLogicInputs(INITIAL_LOGIC);
   }, []);
@@ -114,6 +126,7 @@ export function useGateMasterStore() {
     isCollapsed,
     logicInputs,
     toggleLogicInput,
+    setLogicInputsState,
     resetLogic,
     halfAdderOutputs,
     laChallengeSolved,

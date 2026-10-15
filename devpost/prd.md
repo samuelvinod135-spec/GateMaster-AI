@@ -118,6 +118,25 @@ A responsive single-surface application featuring a persistent top header and a 
 
 ---
 
+### 5. AI Problem Box & Concept Tutor
+*Source: `scope.md > The POC Boundary > AI Problem Box`.*
+
+- **Natural Language Problem Input:** Student types a math or logic concept (e.g. "rotate 90 degrees then shear", "design a half adder", "what does a determinant of 0 mean").
+- **Strict Schema Enforcement:** Output is strictly validated with Zod against `AIProblemResponseSchema`. Zero code generation or evaluation permitted.
+- **Interactive Stepper Walkthrough:** Multi-step explanations with "Back" and "Next" controls. Advancing steps updates the corresponding Canvas in real time.
+- **"Try It Yourself" Mode:** Seamlessly transitions from AI explanation to free-form tactile exploration, leaving the canvas interactive.
+- **Weak Topic Tracking:** Logs queried concept tags to Supabase `ai_queries` (with local storage backup) and displays a summary of the student's top-queried topics with practice recommendations.
+- **Resilient Fallback:** Cached responses for standard prompts kick in within 8s if offline or if network times out.
+
+#### Acceptance Criteria
+- [ ] Submitting "rotate 90 degrees and shear" automatically routes to Linear Algebra and animates the composite matrix.
+- [ ] Submitting "design a half adder" routes to Digital Logic, illuminates the circuit wires, and highlights the truth table.
+- [ ] Unsupported queries display a friendly guidance banner with supported concept chips.
+- [ ] Zod rejects any non-conforming responses; code blocks are never rendered.
+- [ ] Concept tags accumulate in the Weak Topics panel across queries.
+
+---
+
 ## States and Boundaries
 
 - **First Use State:** Default matrix $\begin{bmatrix} 2 & 1 \\ 0 & 1 \end{bmatrix}$ loaded; canvas shows initial sheared grid; challenge 1 prompt visible; total score `0/2`.
