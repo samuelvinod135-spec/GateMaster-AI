@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Matrix2x2 } from '../../types';
 import { LinearAlgebraControls } from './LinearAlgebraControls';
 import { VectorCanvas } from './VectorCanvas';
@@ -23,6 +23,8 @@ export const LinearAlgebraView: React.FC<LinearAlgebraViewProps> = ({
   isCollapsed,
   isSolved,
 }) => {
+  const [showEigenvectors, setShowEigenvectors] = useState<boolean>(false);
+
   return (
     <div className="main-content">
       {/* Left Controls & Challenge */}
@@ -41,12 +43,18 @@ export const LinearAlgebraView: React.FC<LinearAlgebraViewProps> = ({
           resetMatrix={resetMatrix}
           determinant={determinant}
           isCollapsed={isCollapsed}
+          showEigenvectors={showEigenvectors}
+          onToggleEigenvectors={setShowEigenvectors}
         />
       </div>
 
       {/* Right Canvas */}
       <div className="canvas-panel">
-        <VectorCanvas matrix={matrix} isCollapsed={isCollapsed} />
+        <VectorCanvas
+          matrix={matrix}
+          isCollapsed={isCollapsed}
+          showEigenvectors={showEigenvectors}
+        />
       </div>
     </div>
   );

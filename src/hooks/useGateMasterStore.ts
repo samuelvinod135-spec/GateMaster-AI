@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { Matrix2x2, LogicInputs, EngineMode, HalfAdderOutputs } from '../types';
 import { calculateDeterminant, isDeterminantZero } from '../lib/math';
+import { computeEigen2x2 } from '../lib/eigen';
 import { logChallengeAttempt } from '../services/challengeTracker';
 
 export const INITIAL_MATRIX: Matrix2x2 = {
@@ -36,6 +37,7 @@ export function useGateMasterStore() {
 
   // Challenges
   const [laChallengeSolved, setLaChallengeSolved] = useState<boolean>(false);
+  const [laEigenChallengeSolved, setLaEigenChallengeSolved] = useState<boolean>(false);
   const [dlChallengeSolved, setDlChallengeSolved] = useState<boolean>(false);
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [celebrationMessage, setCelebrationMessage] = useState<string>('');
@@ -53,9 +55,16 @@ export function useGateMasterStore() {
         fireConfetti();
         setTimeout(() => setShowCelebration(false), 3500);
       }
+
+      const eigen = computeEigen2x2(next);
+      if (eigen.hasRealEigenvalues && (Math.abs(next.b) > 0.5 || Math.abs(next.a - next.d) > 0.5) && !laEigenChallengeSolved) {
+        setLaEigenChallengeSolved(true);
+        void logChallengeAttempt('la-eigenvector', 'linear_algebra', ['eigenvector', 'eigenvalue'], true, 1);
+      }
+
       return next;
     });
-  }, [laChallengeSolved]);
+  }, [laChallengeSolved, laEigenChallengeSolved]);
 
   const loadMatrixPreset = useCallback((preset: Matrix2x2) => {
     setMatrix(preset);
@@ -134,8 +143,10 @@ export function useGateMasterStore() {
     resetLogic,
     halfAdderOutputs,
     laChallengeSolved,
+    laEigenChallengeSolved,
     dlChallengeSolved,
     setLaChallengeSolved,
+    setLaEigenChallengeSolved,
     setDlChallengeSolved,
     totalScore,
     showCelebration,

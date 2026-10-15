@@ -139,6 +139,49 @@ export const CACHED_AI_RESPONSES: Record<string, AIProblemResponse> = {
     },
     unsupported_reason: null,
   },
+  // 4. Linear Algebra: Eigenvectors
+  'what is an eigenvector': {
+    topic: 'linear_algebra',
+    concept_tags: ['eigenvector', 'eigenvalue', 'scaling', 'linear_transformation'],
+    title: 'Understanding Eigenvectors and Eigenvalues',
+    steps: [
+      {
+        title: 'Step 1: Identifying Directions That Do Not Rotate',
+        explanation:
+          'Most vectors change direction when multiplied by a matrix. An eigenvector is a special vector whose direction remains unchanged—it only gets scaled by a factor called the eigenvalue λ.',
+        visual: {
+          type: 'matrix',
+          matrix: [
+            [2, 0],
+            [0, 1],
+          ],
+          show_determinant: true,
+        },
+      },
+      {
+        title: 'Step 2: Visualizing Eigenvector Span Lines',
+        explanation:
+          'For a diagonal scaling matrix [[2, 0], [0, 1]], the x-axis has eigenvalue λ₁ = 2.0 (stretching by 2x) while the y-axis has eigenvalue λ₂ = 1.0 (unchanged). Both span lines are eigenvectors.',
+        visual: {
+          type: 'matrix',
+          matrix: [
+            [2, 0],
+            [0, 1],
+          ],
+          show_determinant: true,
+        },
+      },
+    ],
+    final_visual: {
+      type: 'matrix',
+      matrix: [
+        [2, 0],
+        [0, 1],
+      ],
+      show_determinant: true,
+    },
+    unsupported_reason: null,
+  },
 };
 
 /**
@@ -174,6 +217,10 @@ export function getCachedResponse(prompt: string): AIProblemResponse | null {
 
   if (norm.includes('determinant') && (norm.includes('0') || norm.includes('zero') || norm.includes('collapse'))) {
     return CACHED_AI_RESPONSES['what does a determinant of 0 mean'];
+  }
+
+  if (norm.includes('eigenvector') || norm.includes('eigenvalue') || norm.includes('eigen')) {
+    return CACHED_AI_RESPONSES['what is an eigenvector'];
   }
 
   return null;

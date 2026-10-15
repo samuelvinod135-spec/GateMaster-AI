@@ -1,12 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import { Matrix2x2 } from '../../types';
+import { computeEigen2x2 } from '../../lib/eigen';
 
 interface VectorCanvasProps {
   matrix: Matrix2x2;
   isCollapsed: boolean;
+  showEigenvectors?: boolean;
 }
 
-export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed }) => {
+export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed, showEigenvectors = false }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -234,8 +236,60 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
       ctx.restore();
     }
 
+    // 8. Eigenvector Directions Rendering
+    if (showEigenvectors) {
+      const eigen = computeEigen2x2(matrix);
+      ctx.save();
+
+      if (eigen.hasRealEigenvalues && eigen.v1 && eigen.v2) {
+        const lineDist = 14;
+
+        // Eigenvector 1 Line (Sky Blue dashed)
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([8, 5]);
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(toCanvasX(-eigen.v1.x * lineDist), toCanvasY(-eigen.v1.y * lineDist));
+        ctx.lineTo(toCanvasX(eigen.v1.x * lineDist), toCanvasY(eigen.v1.y * lineDist));
+        ctx.stroke();
+
+        // Eigenvector 2 Line (Banana Yellow dashed)
+        ctx.strokeStyle = '#facc15';
+        ctx.shadowColor = 'rgba(250, 204, 21, 0.7)';
+        ctx.beginPath();
+        ctx.moveTo(toCanvasX(-eigen.v2.x * lineDist), toCanvasY(-eigen.v2.y * lineDist));
+        ctx.lineTo(toCanvasX(eigen.v2.x * lineDist), toCanvasY(eigen.v2.y * lineDist));
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
+        ctx.font = '700 11px "JetBrains Mono", monospace';
+        ctx.textAlign = 'left';
+
+        // Labels along vectors
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`v₁ (λ₁=${eigen.lambda1})`, toCanvasX(eigen.v1.x * 2.8) + 6, toCanvasY(eigen.v1.y * 2.8));
+        ctx.fillStyle = '#fde047';
+        ctx.fillText(`v₂ (λ₂=${eigen.lambda2})`, toCanvasX(eigen.v2.x * 2.8) + 6, toCanvasY(eigen.v2.y * 2.8));
+      } else {
+        // Complex eigenvalues (e.g. pure rotation)
+        ctx.fillStyle = '#facc15';
+        ctx.font = '600 12px "Inter", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+          'No real eigenvectors: this transformation rotates every direction.',
+          originX,
+          height - 24
+        );
+      }
+
+      ctx.restore();
+    }
+
     ctx.restore();
-  }, [matrix, isCollapsed]);
+  }, [matrix, isCollapsed, showEigenvectors]);
 
   return (
     <div className="canvas-wrapper">

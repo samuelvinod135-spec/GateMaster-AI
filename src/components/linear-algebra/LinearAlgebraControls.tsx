@@ -1,6 +1,7 @@
 import React from 'react';
 import { Matrix2x2 } from '../../types';
-import { RotateCcw, AlertTriangle, Sparkles } from 'lucide-react';
+import { computeEigen2x2 } from '../../lib/eigen';
+import { RotateCcw, AlertTriangle, Sparkles, Compass } from 'lucide-react';
 
 interface LinearAlgebraControlsProps {
   matrix: Matrix2x2;
@@ -9,6 +10,8 @@ interface LinearAlgebraControlsProps {
   resetMatrix: () => void;
   determinant: number;
   isCollapsed: boolean;
+  showEigenvectors?: boolean;
+  onToggleEigenvectors?: (show: boolean) => void;
 }
 
 export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
@@ -18,7 +21,10 @@ export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
   resetMatrix,
   determinant,
   isCollapsed,
+  showEigenvectors = false,
+  onToggleEigenvectors,
 }) => {
+  const eigen = computeEigen2x2(matrix);
   return (
     <div className="controls-panel">
       {/* 2x2 Matrix Controls Card */}
@@ -165,6 +171,51 @@ export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
             <AlertTriangle size={15} />
             <span>Space collapsed into 1D line/point! Determinant = 0. No inverse matrix exists.</span>
           </div>
+        )}
+      </div>
+
+      {/* Eigenvalues & Eigenvectors Diagnostic Card */}
+      <div className="card">
+        <div className="card-title">
+          <span>Eigenvalues & Directions</span>
+          {onToggleEigenvectors && (
+            <button
+              onClick={() => onToggleEigenvectors(!showEigenvectors)}
+              className={`preset-btn ${showEigenvectors ? 'active' : ''}`}
+              title="Toggle highlighted eigenvector lines on the canvas"
+            >
+              <Compass size={13} />
+              <span>{showEigenvectors ? 'Hide Eigenvectors' : 'Show Eigenvectors'}</span>
+            </button>
+          )}
+        </div>
+
+        {showEigenvectors ? (
+          <div className="eigen-diagnostic-box">
+            {eigen.hasRealEigenvalues && eigen.v1 && eigen.v2 ? (
+              <div className="eigen-values-grid">
+                <div className="eigen-val-item sky">
+                  <span className="eigen-label">Eigenvalue λ₁</span>
+                  <span className="eigen-val">{eigen.lambda1}</span>
+                  <span className="eigen-vec">Dir: [{eigen.v1.x.toFixed(2)}, {eigen.v1.y.toFixed(2)}]</span>
+                </div>
+                <div className="eigen-val-item yellow">
+                  <span className="eigen-label">Eigenvalue λ₂</span>
+                  <span className="eigen-val">{eigen.lambda2}</span>
+                  <span className="eigen-vec">Dir: [{eigen.v2.x.toFixed(2)}, {eigen.v2.y.toFixed(2)}]</span>
+                </div>
+              </div>
+            ) : (
+              <div className="eigen-complex-alert">
+                <AlertTriangle size={14} className="text-yellow" />
+                <span>No real eigenvectors: this transformation rotates every direction.</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="eigen-prompt-hint">
+            Click 'Show Eigenvectors' above to highlight span directions that scale without rotating.
+          </p>
         )}
       </div>
     </div>

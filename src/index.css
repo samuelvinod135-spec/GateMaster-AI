@@ -2068,4 +2068,84 @@ body {
   transform: translateY(-1px);
 }
 
+/* Eigenvectors Diagnostic Card */
+.eigen-diagnostic-box {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.eigen-values-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.eigen-val-item {
+  background: #050811;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.eigen-val-item.sky {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.eigen-val-item.yellow {
+  border-color: rgba(250, 204, 21, 0.3);
+}
+
+.eigen-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.eigen-val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-white);
+}
+
+.eigen-val-item.sky .eigen-val {
+  color: var(--sky-primary);
+}
+
+.eigen-val-item.yellow .eigen-val {
+  color: var(--yellow-bright);
+}
+
+.eigen-vec {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.eigen-complex-alert {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.775rem;
+  color: var(--yellow-bright);
+  line-height: 1.4;
+}
+
+.eigen-prompt-hint {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+
 
