@@ -1,12 +1,31 @@
 // Supabase Edge Function: solve-problem
-// Deno runtime: handles server-side LLM completion, validation, and error handling.
+// Deno runtime: handles server-side LLM completion, validation, rate limiting, and safe error handling.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { z } from 'https://esm.sh/zod@3.23.8';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.10';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// ========================================================
+// Dynamic CORS Restricted to Localhost & Deployed Domain
+// ========================================================
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOriginEnv = Deno.env.get('ALLOWED_ORIGIN') || '';
+
+  const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+  const isAllowedDomain = Boolean(allowedOriginEnv && origin.includes(allowedOriginEnv));
+  const isVercel = origin.endsWith('.vercel.app');
+
+  const allowOrigin =
+    isLocalhost || isAllowedDomain || isVercel
+      ? origin
+      : allowedOriginEnv || 'http://localhost:5173';
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 // ========================================================
 // Strict Zod Schemas
@@ -105,24 +124,35 @@ async function callLLM(prompt: string, correctiveFeedback?: string): Promise<str
     const contents = [
       {
         role: 'user',
-        parts: [{ text: SYSTEM_PROMPT + '\n\n' + (correctiveFeedback ? `PREVIOUS ATTEMPT FAILED: ${correctiveFeedback}\n\n` : '') + `Student Query: "${prompt}"` }],
+        parts: [
+          {
+            text:
+              SYSTEM_PROMPT +
+              '\n\n' +
+              (correctiveFeedback ? `PREVIOUS ATTEMPT FAILED: ${correctiveFeedback}\n\n` : '') +
+              `Student Query: "${prompt}"`,
+          },
+        ],
       },
     ];
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-        },
-      }),
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    );
 
     if (!res.ok) {
-      throw new Error(`Gemini API error: ${res.statusText}`);
+      throw new Error(`Upstream LLM request failed (${res.status})`);
     }
     const data = await res.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -150,24 +180,57 @@ async function callLLM(prompt: string, correctiveFeedback?: string): Promise<str
     });
 
     if (!res.ok) {
-      throw new Error(`OpenAI API error: ${res.statusText}`);
+      throw new Error(`Upstream LLM request failed (${res.status})`);
     }
     const data = await res.json();
     return data.choices?.[0]?.message?.content || '';
   }
 
-  throw new Error('No LLM API key configured on server. Set GEMINI_API_KEY or OPENAI_API_KEY in Supabase secrets.');
+  throw new Error('No LLM API key configured on server.');
+}
+
+// ========================================================
+// Rate Limiter: Max 20 queries/hour per session_id
+// ========================================================
+async function checkRateLimit(sessionId: string): Promise<boolean> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY');
+  if (!supabaseUrl || !serviceKey || !sessionId) return true;
+
+  try {
+    const supabase = createClient(supabaseUrl, serviceKey);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count, error } = await supabase
+      .from('ai_queries')
+      .select('*', { count: 'exact', head: true })
+      .eq('session_id', sessionId)
+      .gte('created_at', oneHourAgo);
+
+    if (error) {
+      console.warn('Rate limit query warning:', error.message);
+      return true; // Fail open on db network blip
+    }
+
+    return (count || 0) < 20;
+  } catch (_e) {
+    return true;
+  }
 }
 
 serve(async (req) => {
-  // Handle CORS
+  const corsHeaders = getCorsHeaders(req);
+
+  // Handle CORS Preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { prompt } = await req.json();
+    const body = await req.json();
+    const prompt = body?.prompt;
+    const sessionId = body?.session_id || 'anonymous';
 
+    // 1. Prompt validations
     if (!prompt || typeof prompt !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing or invalid "prompt" parameter' }), {
         status: 400,
@@ -175,14 +238,32 @@ serve(async (req) => {
       });
     }
 
+    // 2. 500-character input limit
     if (prompt.trim().length > 500) {
-      return new Response(JSON.stringify({ error: 'Prompt exceeds 500 character limit' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Prompt exceeds maximum limit of 500 characters' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    // First attempt
+    // 3. Per-session Rate Limit check (20 requests/hour)
+    const isAllowed = await checkRateLimit(sessionId);
+    if (!isAllowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded: maximum 20 requests per hour per session. Please wait before asking more questions.',
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // 4. Call LLM (First attempt)
     let rawOutput = await callLLM(prompt);
     let parsed: unknown;
     try {
@@ -193,7 +274,7 @@ serve(async (req) => {
       parsed = JSON.parse(stripCodeFences(rawOutput));
     }
 
-    // Validate with Zod
+    // 5. Validate with Zod
     const validation = AIProblemResponseSchema.safeParse(parsed);
     if (!validation.success) {
       // Retry once with validation errors
@@ -204,8 +285,7 @@ serve(async (req) => {
       if (!retryValidation.success) {
         return new Response(
           JSON.stringify({
-            error: 'AI response failed schema validation',
-            details: retryValidation.error.format(),
+            error: 'AI response failed schema validation. Please rephrase your query.',
           }),
           { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -221,10 +301,14 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown server error';
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Sanitize error: never return stack traces or raw secret error messages to client
+    console.error('Edge function caught error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Unable to process engineering query at this time. Please try again.' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });

@@ -3,6 +3,7 @@
 
 # Local credential files
 .env
+.env.local
 .env.*
 !.env.example
 

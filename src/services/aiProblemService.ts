@@ -116,7 +116,7 @@ export async function solveProblemWithAI(prompt: string): Promise<SolveProblemRe
 
   try {
     const { data: edgeData, error: edgeError } = await supabase.functions.invoke('solve-problem', {
-      body: { prompt: trimmed },
+      body: { prompt: trimmed, session_id: sessionId },
     });
 
     clearTimeout(timeoutId);
