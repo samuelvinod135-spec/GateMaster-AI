@@ -53,25 +53,43 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
         ctx.stroke();
       }
 
-      // Schematic Layout Geometry
-      const inputX = width * 0.12;
-      const inputAY = height * 0.32;
-      const inputBY = height * 0.68;
+      // ========================================================
+      // Responsive Dynamic Centering & Layout Calculation
+      // ========================================================
+      const centerY = height / 2;
+      const verticalGap = Math.max(110, Math.min(150, height * 0.28));
 
-      const junction1X = width * 0.28;
-      const junction2X = width * 0.34;
+      // Separate gates with massive breathing room (220px to 300px apart)
+      const xorGateY = centerY - verticalGap;
+      const andGateY = centerY + verticalGap;
 
-      const xorGateX = width * 0.52;
-      const xorGateY = height * 0.35;
+      // Pin Y positions
+      const pinOffset = 16;
+      const xorPin1Y = xorGateY - pinOffset;
+      const xorPin2Y = xorGateY + pinOffset;
+      const andPin1Y = andGateY - pinOffset;
+      const andPin2Y = andGateY + pinOffset;
 
-      const andGateX = width * 0.52;
-      const andGateY = height * 0.65;
+      // Inputs A and B are horizontally aligned with XOR inputs
+      const inputAY = xorPin1Y;
+      const inputBY = xorPin2Y;
 
-      const outputX = width * 0.86;
+      // Horizontal Layout Alignment (Centered in Viewport)
+      const schematicWidth = Math.min(680, width * 0.88);
+      const startX = Math.max(30, (width - schematicWidth) / 2);
+
+      const inputX = startX + 40;
+      const branchAX = startX + 175;  // Bus line dropping down to AND Pin 1
+      const branchBX = startX + 225;  // Bus line dropping down to AND Pin 2
+      const gateInX = startX + 310;   // Left edge of gates
+      const gateCenterX = startX + 355;
+      const gateOutX = startX + 400;  // Right output edge of gates
+      const outputX = startX + schematicWidth - 30;
+
       const sumY = xorGateY;
       const carryY = andGateY;
 
-      // Helper: Draw Wire segment with neon glow (Sky Blue: #38bdf8)
+      // Helper: Draw Orthogonal Wire
       const drawWire = (path: [number, number][], isHigh: boolean, color = '#38bdf8') => {
         ctx.save();
         ctx.beginPath();
@@ -94,50 +112,90 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
         ctx.restore();
       };
 
-      // 1. Draw Wires from Input A
-      // Path A -> XOR Input 1
+      // Helper: Draw Junction Dot
+      const drawJunction = (x: number, y: number, isHigh: boolean, color = '#38bdf8') => {
+        ctx.save();
+        ctx.fillStyle = isHigh ? color : '#475569';
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      };
+
+      // ========================================================
+      // 1. Orthogonal Wire Routing for Input A
+      // ========================================================
+      // Main Line A: Input A -> XOR Pin 1 (straight horizontal)
       drawWire([
         [inputX, inputAY],
-        [junction1X, inputAY],
-        [xorGateX - 45, xorGateY - 14]
+        [gateInX, xorPin1Y]
       ], inputs.a, '#38bdf8');
 
-      // Path A Branch -> AND Input 1
+      // Branch A: Drops down vertically at branchAX to AND Pin 1
       drawWire([
-        [junction1X, inputAY],
-        [junction1X, andGateY - 14],
-        [andGateX - 45, andGateY - 14]
+        [branchAX, inputAY],
+        [branchAX, andPin1Y],
+        [gateInX, andPin1Y]
       ], inputs.a, '#38bdf8');
 
-      // 2. Draw Wires from Input B
-      // Path B -> AND Input 2
+      // Junction Dot for Branch A
+      drawJunction(branchAX, inputAY, inputs.a, '#38bdf8');
+
+      // ========================================================
+      // 2. Orthogonal Wire Routing for Input B
+      // ========================================================
+      // Main Line B: Input B -> XOR Pin 2 (straight horizontal)
+      // Note: At branchAX, line B crosses wire A. We draw a clean bridge arc.
+      const bridgeRadius = 6;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(inputX, inputBY);
+      ctx.lineTo(branchAX - bridgeRadius, inputBY);
+      // Bridge arc over vertical wire A
+      ctx.arc(branchAX, inputBY, bridgeRadius, Math.PI, 0, false);
+      ctx.lineTo(gateInX, xorPin2Y);
+
+      if (inputs.b) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3.5;
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 12 + Math.sin(pulseOffset) * 4;
+      } else {
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 0;
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Branch B: Drops down vertically at branchBX to AND Pin 2
       drawWire([
-        [inputX, inputBY],
-        [junction2X, inputBY],
-        [andGateX - 45, andGateY + 14]
+        [branchBX, inputBY],
+        [branchBX, andPin2Y],
+        [gateInX, andPin2Y]
       ], inputs.b, '#38bdf8');
 
-      // Path B Branch -> XOR Input 2
-      drawWire([
-        [junction2X, inputBY],
-        [junction2X, xorGateY + 14],
-        [xorGateX - 45, xorGateY + 14]
-      ], inputs.b, '#38bdf8');
+      // Junction Dot for Branch B
+      drawJunction(branchBX, inputBY, inputs.b, '#38bdf8');
 
-      // 3. Output Wires
-      // XOR Output -> Sum LED (Sky Blue: #38bdf8)
+      // ========================================================
+      // 3. Output Wires (Clean straight horizontal lines to LEDs)
+      // ========================================================
+      // XOR Output -> Sum LED
       drawWire([
-        [xorGateX + 45, xorGateY],
+        [gateOutX, sumY],
         [outputX, sumY]
       ], outputs.sum, '#38bdf8');
 
-      // AND Output -> Carry LED (Banana Yellow: #facc15)
+      // AND Output -> Carry LED
       drawWire([
-        [andGateX + 45, andGateY],
+        [gateOutX, carryY],
         [outputX, carryY]
       ], outputs.carry, '#facc15');
 
-      // 4. Draw XOR Gate (Sky Blue accent)
+      // ========================================================
+      // 4. Draw XOR Gate (Centered at gateCenterX, xorGateY)
+      // ========================================================
       const drawXORGate = (cx: number, cy: number, isActive: boolean) => {
         ctx.save();
         ctx.translate(cx, cy);
@@ -150,7 +208,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
           ctx.shadowBlur = 14;
         }
 
-        // Curved back
+        // Curved input back
         ctx.beginPath();
         ctx.arc(-45, 0, 48, -Math.PI / 3, Math.PI / 3, false);
         ctx.stroke();
@@ -174,7 +232,9 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
         ctx.restore();
       };
 
-      // 5. Draw AND Gate (Banana Yellow accent)
+      // ========================================================
+      // 5. Draw AND Gate (Centered at gateCenterX, andGateY)
+      // ========================================================
       const drawANDGate = (cx: number, cy: number, isActive: boolean) => {
         ctx.save();
         ctx.translate(cx, cy);
@@ -187,12 +247,12 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
           ctx.shadowBlur = 14;
         }
 
-        // AND body
+        // AND body (flat back, rounded front)
         ctx.beginPath();
-        ctx.moveTo(-35, -32);
-        ctx.lineTo(5, -32);
-        ctx.arc(5, 0, 32, -Math.PI / 2, Math.PI / 2, false);
-        ctx.lineTo(-35, 32);
+        ctx.moveTo(-45, -32);
+        ctx.lineTo(-5, -32);
+        ctx.arc(-5, 0, 32, -Math.PI / 2, Math.PI / 2, false);
+        ctx.lineTo(-45, 32);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -202,15 +262,17 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
         ctx.font = '700 12px "JetBrains Mono", monospace';
         ctx.textAlign = 'center';
         ctx.shadowBlur = 0;
-        ctx.fillText('AND', -5, 4);
+        ctx.fillText('AND', -12, 4);
 
         ctx.restore();
       };
 
-      drawXORGate(xorGateX, xorGateY, outputs.sum);
-      drawANDGate(andGateX, andGateY, outputs.carry);
+      drawXORGate(gateCenterX, xorGateY, outputs.sum);
+      drawANDGate(gateCenterX, andGateY, outputs.carry);
 
-      // 6. Draw Input Terminals (Sky Blue accent)
+      // ========================================================
+      // 6. Draw Input Terminals A & B
+      // ========================================================
       const drawTerminal = (x: number, y: number, label: string, isHigh: boolean) => {
         ctx.save();
         ctx.fillStyle = isHigh ? '#38bdf8' : '#1e293b';
@@ -244,19 +306,9 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
       drawTerminal(inputX, inputAY, 'A', inputs.a);
       drawTerminal(inputX, inputBY, 'B', inputs.b);
 
-      // Junction dots
-      const drawJunction = (x: number, y: number, isHigh: boolean) => {
-        ctx.save();
-        ctx.fillStyle = isHigh ? '#38bdf8' : '#475569';
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      };
-      drawJunction(junction1X, inputAY, inputs.a);
-      drawJunction(junction2X, inputBY, inputs.b);
-
-      // 7. Draw Output LEDs
+      // ========================================================
+      // 7. Draw Output LEDs for Sum & Carry
+      // ========================================================
       const drawOutputLED = (
         x: number,
         y: number,

@@ -1051,7 +1051,7 @@ body {
 
 .canvas-wrapper {
   flex: 1;
-  min-height: 540px;
+  min-height: 580px;
   background: #050811;
   border: 1px solid var(--border-subtle);
   border-radius: 0.875rem;
