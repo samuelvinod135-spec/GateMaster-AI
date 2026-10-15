@@ -121,12 +121,14 @@ A responsive single-surface application featuring a persistent top header and a 
 ### 5. AI Problem Box & Concept Tutor
 *Source: `scope.md > The POC Boundary > AI Problem Box`.*
 
-- **Natural Language Problem Input:** Student types a math or logic concept (e.g. "rotate 90 degrees then shear", "design a half adder", "what does a determinant of 0 mean").
+- **Natural Language Problem Input:** Student types a math or logic concept (e.g. "rotate 90 degrees then shear", "design a half adder", "what does a determinant of 0 mean", "what is an eigenvector").
 - **Strict Schema Enforcement:** Output is strictly validated with Zod against `AIProblemResponseSchema`. Zero code generation or evaluation permitted.
 - **Interactive Stepper Walkthrough:** Multi-step explanations with "Back" and "Next" controls. Advancing steps updates the corresponding Canvas in real time.
 - **"Try It Yourself" Mode:** Seamlessly transitions from AI explanation to free-form tactile exploration, leaving the canvas interactive.
-- **Weak Topic Tracking:** Logs queried concept tags to Supabase `ai_queries` (with local storage backup) and displays a summary of the student's top-queried topics with practice recommendations.
-- **Resilient Fallback:** Cached responses for standard prompts kick in within 8s if offline or if network times out.
+- **Weak Topic Tracking:** Logs queried concept tags to Supabase `ai_queries` and attempt outcomes to `challenge_attempts`. Pure scoring formula:
+  $$\text{Score} = (\text{failed\_attempts} \times 2) + (\text{retries} \times 1) + (\text{AI queries} \times 1)$$
+  weighted with time decay. Displays top 3 weak topics with plain-English reasons and a direct "Practice this" CTA button.
+- **Resilient Fallback:** Cached responses for standard prompts kick in within 8s if offline or if network times out, plus `?demo=1` flag for instant zero-latency recording.
 
 #### Acceptance Criteria
 - [ ] Submitting "rotate 90 degrees and shear" automatically routes to Linear Algebra and animates the composite matrix.
@@ -134,6 +136,22 @@ A responsive single-surface application featuring a persistent top header and a 
 - [ ] Unsupported queries display a friendly guidance banner with supported concept chips.
 - [ ] Zod rejects any non-conforming responses; code blocks are never rendered.
 - [ ] Concept tags accumulate in the Weak Topics panel across queries.
+- [ ] `?demo=1` forces immediate cached demo mode with the "Offline demo mode" badge.
+
+---
+
+### 6. 2D Eigenvalues and Eigenvectors Diagnostic
+*Source: `scope.md > The POC Boundary > Linear Algebra Module`.*
+
+- **Analytical Eigenvalues & Eigenvectors:** Computes roots $\lambda_1, \lambda_2$ of characteristic polynomial $\lambda^2 - \text{tr}(M)\lambda + \det(M) = 0$ for any 2x2 matrix.
+- **Span Lines Rendering:** Draws two distinct dashed glowing span lines on the grid representing real eigenvector directions, with eigenvalue readouts.
+- **Complex Invariant Rotation Guard:** If eigenvalues are complex (e.g. pure rotations where discriminant $\Delta < 0$), hides lines and renders: *"No real eigenvectors: this transformation rotates every direction."*
+- **Toggle Control:** Accessible "Show Eigenvectors" toggle in the control panel.
+
+#### Acceptance Criteria
+- [ ] Toggling eigenvectors on for a diagonal or shear matrix displays valid highlighted span lines.
+- [ ] Rotating the matrix (e.g., 90° preset) removes the lines and displays the invariant rotation alert.
+- [ ] Unit tests cover identity, scaling, shear, rotation, and singular matrices.
 
 ---
 
@@ -157,15 +175,17 @@ A responsive single-surface application featuring a persistent top header and a 
 
 ## What We're Building
 - Dual-engine web application with Linear Algebra and Digital Logic modes.
-- HTML5 Canvas real-time 2D matrix transformation renderer with basis vectors and determinant shading.
+- HTML5 Canvas real-time 2D matrix transformation renderer with basis vectors, determinant shading, and 2D eigenvectors.
 - Interactive Half-Adder circuit simulator with dynamic wire glow and reactive Truth Table highlighting.
-- 2 interactive micro-challenges with animated completion banners.
+- AI Problem Box concept tutor with Zod validation, multi-step stepper, and demo fallback.
+- Supabase-backed Weak-Topic Dashboard with pure scoring and challenge practice routing.
 - Anonymous guest persistence with `localStorage` and Supabase cloud sync integration.
 
 ---
 
 ## Deferred From the POC
-- 3D matrix visualization and eigenvalue/eigenvector ray casting.
+- Photo/OCR input planned.
+- 3D matrix transformations ($3 \times 3$ determinant and spatial volume warping).
 - Full combinational/sequential logic gate component library (multiplexers, flip-flops, ALUs).
 - Multi-user authentication, classroom leaderboards, and teacher assignment portals.
 

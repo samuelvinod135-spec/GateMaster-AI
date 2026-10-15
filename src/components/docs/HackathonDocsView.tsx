@@ -107,7 +107,30 @@ export const HackathonDocsView: React.FC<HackathonDocsViewProps> = ({ setView })
               <p className="stack-desc">Matte Black surfaces (#050811), Crisp White text, Sky Blue accents (#38bdf8), and Banana Yellow highlights (#facc15).</p>
             </div>
           </div>
+
+          <div className="stack-item">
+            <div className="stack-icon-box text-sky">
+              <Cpu size={20} />
+            </div>
+            <div>
+              <h3 className="stack-name">AI Problem Box & Zod Validation</h3>
+              <p className="stack-desc">Typed conceptual problem tutor returning schema-validated JSON only (zero code generation) with 8s demo fallback and ?demo=1 URL support.</p>
+            </div>
+          </div>
+
+          <div className="stack-item">
+            <div className="stack-icon-box text-yellow">
+              <Layers size={20} />
+            </div>
+            <div>
+              <h3 className="stack-name">2D Eigenvectors & Weak Topics</h3>
+              <p className="stack-desc">Real eigenvalue span-line visualization with rotation invariant guards and pure mathematical scoring of weak student topics.</p>
+            </div>
+          </div>
         </div>
+        <p className="docs-text" style={{ marginTop: '1rem', fontStyle: 'italic', fontSize: '0.85rem', color: '#94a3b8' }}>
+          *Future work: Photo/OCR input planned; 3D spatial transformations; arbitrary combinational logic circuit designer.*
+        </p>
       </div>
 
       {/* Planning Journey Breakdown */}

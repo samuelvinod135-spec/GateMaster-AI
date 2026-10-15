@@ -40,25 +40,29 @@ A 60-second end-to-end demo:
   - Interactive $\hat{i}$ and $\hat{j}$ basis vector controls and matrix slider inputs ($a, b, c, d$).
   - Real-time grid transformation rendering and shaded determinant parallelogram.
   - Determinant calculation display with visual collapse notification when $\det = 0$.
+  - 2D Eigenvalues and real Eigenvector span lines with complex rotation alerts.
 - **Digital Logic Module:**
   - Interactive schematic for a Half-Adder circuit (XOR and AND gates with connecting traces).
   - Clickable 0/1 binary toggle inputs.
   - Signal propagation rendering (visual wire glow based on high/low states).
   - Synchronized Truth Table updating and highlighting the active combination row.
 - **Micro-Challenge & Persistence:**
-  - One interactive puzzle per engine (e.g., "Collapse the Grid", "Generate Carry Bit").
-  - Supabase client integration storing completed challenge statuses and scores.
+  - Interactive micro-challenges per engine (e.g., "Collapse the Grid", "Generate Carry Bit").
+  - Supabase client integration storing completed challenge statuses and scores under an anonymous session UUID.
 - **AI Problem Box (Concept Tutor):**
-  - Natural language concept and problem query input validated strictly with Zod.
+  - Typed problem tutor for natural language conceptual questions validated strictly with Zod.
   - Serverless Edge Function `solve-problem` returning structured JSON only (never code).
   - Stepper walkthrough mapping multi-step visual proofs live onto existing Canvas engines.
-  - Offline demo caching for instant responses and weak-topic tracking.
+  - Offline demo fallback caching (`?demo=1`) and Supabase-backed Weak-Topic Dashboard.
 
-## Later
-- 3D matrix transformations (3x3 determinant, eigenvalues, eigenvectors).
+## Later (Future Work)
+- Photo/OCR input planned.
+- 3D matrix transformations (3x3 determinant, spatial volume warping).
 - Arbitrary drag-and-drop digital circuit designer with full logic gate library (NAND, NOR, XNOR, MUX, Flip-Flops).
-- Full user authentication, historical analytics, and classroom leaderboards.
+- Full user authentication, historical classroom analytics, and leaderboards.
 
 ## Explicitly Cut
 - **Unstructured / Code-Generating LLM Outputs:** Cut. The AI tutor is strictly constrained to return structured data matching a Zod schema; it never generates, evaluates, or returns executable code.
 - **Complex Sequential Circuit Simulation (Clocks, Latches):** Cut to keep the PoC achievable in 2–4 hours while focusing on rock-solid combinational logic visualization.
+- **Unreliable Photo/Image OCR:** Cut for PoC; the tutor focuses on fast, reliable typed conceptual problem input.
+

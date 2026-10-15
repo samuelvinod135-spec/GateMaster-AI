@@ -147,9 +147,10 @@ export interface UserProgress {
 ```
 
 ### 2. Storage & Supabase Schema
-- **Local Storage Key:** `gatemaster_user_progress`
-- **Supabase Table:** `user_progress`
+- **Local Storage Keys:** `gatemaster_session_id`, `gatemaster_user_progress`, `gatemaster_local_attempts`, `gatemaster_local_queries`
+- **Supabase Tables with Row Level Security (RLS):**
 ```sql
+-- User progress
 CREATE TABLE IF NOT EXISTS user_progress (
   session_id TEXT PRIMARY KEY,
   linear_algebra_solved BOOLEAN DEFAULT FALSE,
@@ -157,6 +158,34 @@ CREATE TABLE IF NOT EXISTS user_progress (
   score INTEGER DEFAULT 0,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- AI conceptual queries
+CREATE TABLE IF NOT EXISTS ai_queries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id TEXT NOT NULL,
+  prompt TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  concept_tags TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Challenge test attempts
+CREATE TABLE IF NOT EXISTS challenge_attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id TEXT NOT NULL,
+  challenge_id TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  concept_tags TEXT[] NOT NULL DEFAULT '{}',
+  success BOOLEAN NOT NULL DEFAULT FALSE,
+  attempts_count INTEGER NOT NULL DEFAULT 1,
+  time_taken_ms INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- RLS: Allow anonymous guests to insert and view only their own session rows
+ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_queries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE challenge_attempts ENABLE ROW LEVEL SECURITY;
 ```
 
 ---
@@ -166,47 +195,76 @@ CREATE TABLE IF NOT EXISTS user_progress (
 ```
 GateMaster AI/
 ├── index.html                  # HTML entry point with Google Fonts preloads
-├── package.json                # Dependencies and scripts (Vite, React, TypeScript)
-├── tsconfig.json               # TypeScript configuration
+├── package.json                # Dependencies and scripts (Vite, React, TypeScript, Vitest)
+├── tsconfig.json               # TypeScript strict configuration
 ├── vite.config.ts              # Vite configuration
-├── .gitignore                  # Git ignore rules (includes learner-profile, .env)
+├── vercel.json                 # Vercel SPA routing rewrite config
+├── netlify.toml                # Netlify SPA routing rewrite config
+├── .gitignore                  # Git ignore rules (includes .env, .env.local)
+├── .env.example                # Placeholder keys only (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
 ├── devpost/                    # Hackathon planning artifacts
 │   ├── learner-profile.md
 │   ├── scope.md
 │   ├── prd.md
 │   └── spec.md
+├── supabase/
+│   ├── migrations/             # SQL migrations for ai_queries and challenge_attempts
+│   └── functions/
+│       └── solve-problem/      # Deno Edge Function with Rate Limiting and CORS guard
 ├── src/
 │   ├── main.tsx                # React root mount
 │   ├── App.tsx                 # Main layout, mode router, header, and views
 │   ├── index.css               # Global theme tokens, typography, layout, glow effects
-│   ├── types.ts                # TypeScript interfaces (Matrix, Logic, Progress)
+│   ├── types/                  # TypeScript interfaces and Zod schemas (ai.ts, types.ts)
 │   ├── lib/
 │   │   ├── supabase.ts         # Supabase client initializer with graceful fallback
-│   │   └── math.ts             # Matrix transformation, determinant, coordinate math
+│   │   ├── math.ts             # Matrix transformation, determinant, coordinate math
+│   │   └── eigen.ts            # 2x2 Eigenvalue, Eigenvector, and invariant rotation math
+│   ├── data/
+│   │   └── cachedResponses.ts  # Pre-cached Zod-validated demo responses for instant fallback
+│   ├── services/
+│   │   ├── aiProblemService.ts # AI solver caller with 8s timeout, ?demo=1 flag, and offline fallback
+│   │   ├── challengeTracker.ts # Attempt logger and live event dispatcher
+│   │   └── computeWeakTopics.ts# Pure scoring algorithm with time decay
 │   ├── hooks/
 │   │   ├── useGateMasterStore.ts # Centralized reactive state store
 │   │   └── usePersistence.ts   # Anonymous UUID, localStorage caching, Supabase sync
-│   └── components/
-│       ├── Header.tsx          # Top navigation and score badge
-│       ├── ChallengeCard.tsx   # Micro-challenge prompt and success banner
-│       ├── linear-algebra/
-│       │   ├── LinearAlgebraView.tsx
-│       │   ├── LinearAlgebraControls.tsx
-│       │   └── VectorCanvas.tsx
-│       └── digital-logic/
-│           ├── DigitalLogicView.tsx
-│           ├── DigitalLogicControls.tsx
-│           ├── CircuitCanvas.tsx
-│           └── TruthTable.tsx
+│   ├── components/
+│   │   ├── Header.tsx          # Top navigation and score badge
+│   │   ├── ChallengeCard.tsx   # Micro-challenge prompt and success banner
+│   │   ├── ai-tutor/
+│   │   │   └── AIProblemBox.tsx# Concept tutor with interactive stepper and offline badge
+│   │   ├── dashboard/
+│   │   │   ├── DashboardView.tsx # Landing Hub view with hero and launch cards
+│   │   │   └── WeakTopicsPanel.tsx # Top 3 weak concepts with reasons and "Practice this" CTAs
+│   │   ├── linear-algebra/
+│   │   │   ├── LinearAlgebraView.tsx
+│   │   │   ├── LinearAlgebraControls.tsx # Sliders, presets, and eigenvector toggle
+│   │   │   └── VectorCanvas.tsx # 60 FPS Canvas with warping grid and eigenvector lines
+│   │   └── digital-logic/
+│   │       ├── DigitalLogicView.tsx
+│   │       ├── DigitalLogicControls.tsx
+│   │       ├── CircuitCanvas.tsx # Canvas schematic with canonical XOR and AND gates
+│   │       └── TruthTable.tsx
+│   └── tests/
+│       ├── aiProblem.test.ts   # Zod validation & cached responses unit tests
+│       ├── computeWeakTopics.test.ts # Scoring formula & time decay unit tests
+│       └── eigen.test.ts       # 2x2 eigenvalue/eigenvector math unit tests
 ```
 
 ---
 
 ## External Services and Dependencies
-- **Supabase Cloud (REST API):**
-  - Endpoint: `POST /rest/v1/user_progress` (Upsert with `Prefer: resolution=merge-duplicates`)
-  - Auth: Public Anon Key
+- **Supabase Cloud (REST API & Database):**
+  - Endpoints: `POST /rest/v1/user_progress`, `POST /rest/v1/ai_queries`, `POST /rest/v1/challenge_attempts`
+  - Auth: Public Anon Key with Row-Level Security scoped by `session_id`.
   - Fallback: Gracefully bypassed if offline or env vars absent.
+- **Supabase Edge Function (`solve-problem`):**
+  - Guards: 500-character maximum prompt length.
+  - Rate Limiting: 20 requests per hour per `session_id` queried against `ai_queries`.
+  - CORS Whitelist: Strict allowance for `localhost` and deployed production URL (`CLIENT_APP_URL`).
+  - Error Response Sanitization: Obfuscated 500 responses with zero stack traces or secret leaks.
+
 
 ---
 
