@@ -28,22 +28,22 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
     ctx.save();
     ctx.scale(dpr, dpr);
 
-    // Clear background
-    ctx.fillStyle = '#060913';
+    // Deep matte black / dark slate background
+    ctx.fillStyle = '#050811';
     ctx.fillRect(0, 0, width, height);
 
     // Coordinate system: center at (width / 2, height / 2)
     const originX = width / 2;
     const originY = height / 2;
 
-    // Scale: 38 pixels per mathematical unit
+    // Scale: mathematical units
     const unitScale = Math.min(width, height) / 12;
 
     const toCanvasX = (x: number) => originX + x * unitScale;
-    const toCanvasY = (y: number) => originY - y * unitScale; // Invert y for standard math Cartesian
+    const toCanvasY = (y: number) => originY - y * unitScale; // Invert y for standard Cartesian
 
     // 1. Draw subtle untransformed reference grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
     ctx.lineWidth = 1;
     const gridRange = 7;
 
@@ -62,25 +62,25 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
     // 2. Draw Transformed Grid Lines
     ctx.lineWidth = 1;
     for (let i = -gridRange; i <= gridRange; i++) {
-      // Lines of constant original x = i, varying y from -gridRange to gridRange
+      // Lines of constant original x = i
       const startX1 = matrix.a * i + matrix.b * -gridRange;
       const startY1 = matrix.c * i + matrix.d * -gridRange;
       const endX1 = matrix.a * i + matrix.b * gridRange;
       const endY1 = matrix.c * i + matrix.d * gridRange;
 
-      ctx.strokeStyle = i === 0 ? 'rgba(6, 182, 212, 0.35)' : 'rgba(148, 163, 184, 0.12)';
+      ctx.strokeStyle = i === 0 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(148, 163, 184, 0.1)';
       ctx.beginPath();
       ctx.moveTo(toCanvasX(startX1), toCanvasY(startY1));
       ctx.lineTo(toCanvasX(endX1), toCanvasY(endY1));
       ctx.stroke();
 
-      // Lines of constant original y = i, varying x from -gridRange to gridRange
+      // Lines of constant original y = i
       const startX2 = matrix.a * -gridRange + matrix.b * i;
       const startY2 = matrix.c * -gridRange + matrix.d * i;
       const endX2 = matrix.a * gridRange + matrix.b * i;
       const endY2 = matrix.c * gridRange + matrix.d * i;
 
-      ctx.strokeStyle = i === 0 ? 'rgba(236, 72, 153, 0.35)' : 'rgba(148, 163, 184, 0.12)';
+      ctx.strokeStyle = i === 0 ? 'rgba(250, 204, 21, 0.4)' : 'rgba(148, 163, 184, 0.1)';
       ctx.beginPath();
       ctx.moveTo(toCanvasX(startX2), toCanvasY(startY2));
       ctx.lineTo(toCanvasX(endX2), toCanvasY(endY2));
@@ -98,13 +98,13 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
       ctx.lineTo(toCanvasX(matrix.b), toCanvasY(matrix.d));
       ctx.closePath();
 
-      // Gradient fill for determinant area
+      // Subtle Sky Blue to Banana Yellow gradient fill
       const grad = ctx.createLinearGradient(
         toCanvasX(0), toCanvasY(0),
         toCanvasX(matrix.a + matrix.b), toCanvasY(matrix.c + matrix.d)
       );
-      grad.addColorStop(0, 'rgba(6, 182, 212, 0.25)');
-      grad.addColorStop(1, 'rgba(236, 72, 153, 0.25)');
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+      grad.addColorStop(1, 'rgba(250, 204, 21, 0.22)');
       ctx.fillStyle = grad;
       ctx.fill();
 
@@ -143,7 +143,7 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
       ctx.lineTo(toX, toY);
       ctx.stroke();
 
-      // Draw Arrow Head (if length is noticeable)
+      // Draw Arrow Head
       if (length > 5) {
         ctx.beginPath();
         ctx.moveTo(toX, toY);
@@ -172,30 +172,30 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
       ctx.restore();
     };
 
-    // 4. Draw i-hat (Transformed: (a, c))
+    // 4. Draw i-hat (Sky Blue: #38bdf8)
     drawArrow(
       toCanvasX(0),
       toCanvasY(0),
       toCanvasX(matrix.a),
       toCanvasY(matrix.c),
-      '#06b6d4',
+      '#38bdf8',
       'î',
       `${matrix.a.toFixed(1)}, ${matrix.c.toFixed(1)}`
     );
 
-    // 5. Draw j-hat (Transformed: (b, d))
+    // 5. Draw j-hat (Banana Yellow: #facc15)
     drawArrow(
       toCanvasX(0),
       toCanvasY(0),
       toCanvasX(matrix.b),
       toCanvasY(matrix.d),
-      '#ec4899',
+      '#facc15',
       'ĵ',
       `${matrix.b.toFixed(1)}, ${matrix.d.toFixed(1)}`
     );
 
     // 6. Center Origin Dot
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(originX, originY, 4, 0, Math.PI * 2);
     ctx.fill();
@@ -204,7 +204,6 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
     if (isCollapsed) {
       ctx.save();
 
-      // Find the dominant vector direction for the 1D subspace
       const dirX = Math.abs(matrix.a) > 0.1 || Math.abs(matrix.c) > 0.1 ? matrix.a : matrix.b;
       const dirY = Math.abs(matrix.a) > 0.1 || Math.abs(matrix.c) > 0.1 ? matrix.c : matrix.d;
       const mag = Math.sqrt(dirX * dirX + dirY * dirY);
@@ -214,10 +213,10 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
         const normY = dirY / mag;
         const lineDist = 20;
 
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
         ctx.lineWidth = 2.5;
         ctx.setLineDash([8, 6]);
-        ctx.shadowColor = 'rgba(239, 68, 68, 0.8)';
+        ctx.shadowColor = 'rgba(250, 204, 21, 0.8)';
         ctx.shadowBlur = 12;
 
         ctx.beginPath();
@@ -226,10 +225,10 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
         ctx.stroke();
       }
 
-      ctx.fillStyle = 'rgba(239, 68, 68, 0.95)';
-      ctx.font = '700 14px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#fde047';
+      ctx.font = '700 13px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(239, 68, 68, 0.9)';
+      ctx.shadowColor = 'rgba(250, 204, 21, 0.9)';
       ctx.shadowBlur = 8;
       ctx.fillText('⚡ 2D SPACE COLLAPSED INTO 1D LINE (det = 0) ⚡', originX, 42);
       ctx.restore();
@@ -243,11 +242,11 @@ export const VectorCanvas: React.FC<VectorCanvasProps> = ({ matrix, isCollapsed 
       <canvas ref={canvasRef} className="interactive-canvas" />
       <div className="canvas-badge-overlay">
         <div className="basis-legend-item">
-          <span className="legend-dot cyan"></span>
+          <span className="legend-dot sky"></span>
           <span>î = [{matrix.a.toFixed(1)}, {matrix.c.toFixed(1)}]</span>
         </div>
         <div className="basis-legend-item">
-          <span className="legend-dot magenta"></span>
+          <span className="legend-dot yellow"></span>
           <span>ĵ = [{matrix.b.toFixed(1)}, {matrix.d.toFixed(1)}]</span>
         </div>
       </div>

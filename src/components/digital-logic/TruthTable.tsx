@@ -21,7 +21,7 @@ export const TruthTable: React.FC<TruthTableProps> = ({ inputs }) => {
             <th>A</th>
             <th>B</th>
             <th style={{ color: '#38bdf8' }}>Sum (A ⊕ B)</th>
-            <th style={{ color: '#fbbf24' }}>Carry (A · B)</th>
+            <th style={{ color: '#facc15' }}>Carry (A · B)</th>
           </tr>
         </thead>
         <tbody>
@@ -31,10 +31,10 @@ export const TruthTable: React.FC<TruthTableProps> = ({ inputs }) => {
               <tr key={idx} className={isActive ? 'active-row' : ''}>
                 <td>{row.a ? 1 : 0}</td>
                 <td>{row.b ? 1 : 0}</td>
-                <td className={row.sum === 1 ? 'out-high' : ''}>
+                <td className={row.sum === 1 ? 'out-sky' : ''}>
                   {row.sum}
                 </td>
-                <td style={row.carry === 1 ? { color: '#fbbf24', textShadow: '0 0 8px rgba(245, 158, 11, 0.8)', fontWeight: 700 } : {}}>
+                <td className={row.carry === 1 ? 'out-yellow' : ''}>
                   {row.carry}
                 </td>
               </tr>

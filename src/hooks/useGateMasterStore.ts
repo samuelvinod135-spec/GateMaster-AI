@@ -21,7 +21,7 @@ function fireConfetti() {
       particleCount: 50,
       spread: 60,
       origin: { y: 0.3 },
-      colors: ['#06b6d4', '#ec4899', '#10b981', '#fbbf24'],
+      colors: ['#38bdf8', '#facc15', '#fde047', '#ffffff'],
     });
   } catch (e) {
     // Graceful fallback if window or canvas not available

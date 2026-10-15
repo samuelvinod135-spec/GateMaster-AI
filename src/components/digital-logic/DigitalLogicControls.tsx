@@ -46,7 +46,7 @@ export const DigitalLogicControls: React.FC<DigitalLogicControlsProps> = ({
             <div className="toggle-state-pill">
               {inputs.a ? '1' : '0'}
             </div>
-            <span style={{ fontSize: '0.7rem', color: inputs.a ? '#10b981' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span style={{ fontSize: '0.7rem', color: inputs.a ? '#38bdf8' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               <Power size={11} />
               <span>{inputs.a ? 'HIGH' : 'LOW'}</span>
             </span>
@@ -63,7 +63,7 @@ export const DigitalLogicControls: React.FC<DigitalLogicControlsProps> = ({
             <div className="toggle-state-pill">
               {inputs.b ? '1' : '0'}
             </div>
-            <span style={{ fontSize: '0.7rem', color: inputs.b ? '#10b981' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span style={{ fontSize: '0.7rem', color: inputs.b ? '#38bdf8' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               <Power size={11} />
               <span>{inputs.b ? 'HIGH' : 'LOW'}</span>
             </span>

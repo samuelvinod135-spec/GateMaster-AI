@@ -67,7 +67,7 @@ export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
               step="0.1"
               value={matrix.b}
               onChange={(e) => updateMatrixCell('b', parseFloat(e.target.value))}
-              className="cell-slider magenta-thumb"
+              className="cell-slider yellow-thumb"
             />
           </div>
 
@@ -101,7 +101,7 @@ export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
               step="0.1"
               value={matrix.d}
               onChange={(e) => updateMatrixCell('d', parseFloat(e.target.value))}
-              className="cell-slider magenta-thumb"
+              className="cell-slider yellow-thumb"
             />
           </div>
         </div>
@@ -153,7 +153,7 @@ export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
             = ({matrix.a.toFixed(1)} × {matrix.d.toFixed(1)}) - ({matrix.b.toFixed(1)} × {matrix.c.toFixed(1)})
           </div>
           <div className="det-value-display">
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Area Factor:</span>
+            <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>Area Scale Factor:</span>
             <span className={`det-number ${isCollapsed ? 'collapsed' : ''}`}>
               {determinant.toFixed(2)}
             </span>
@@ -162,7 +162,7 @@ export const LinearAlgebraControls: React.FC<LinearAlgebraControlsProps> = ({
 
         {isCollapsed && (
           <div className="collapse-alert">
-            <AlertTriangle size={16} />
+            <AlertTriangle size={15} />
             <span>Space collapsed into 1D line/point! Determinant = 0. No inverse matrix exists.</span>
           </div>
         )}
