@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { AIProblemResponse, AIProblemResponseSchema, WeakTopicStat } from '../types/ai';
+import { getCachedResponse } from '../data/cachedResponses';
 import { getFallbackResponseForPrompt } from './aiFallbackData';
 
 const LOCAL_STORAGE_QUERIES_KEY = 'gatemaster_ai_queries_history';
@@ -18,6 +19,19 @@ export interface StoredQueryRecord {
   topic: string;
   conceptTags: string[];
   createdAt: string;
+}
+
+/**
+ * Checks if demo mode is explicitly forced via URL param ?demo=1
+ */
+export function isDemoModeForced(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('demo') === '1';
+  } catch (_e) {
+    return false;
+  }
 }
 
 /**
@@ -45,6 +59,9 @@ function logQueryLocally(record: StoredQueryRecord): void {
     existing.unshift(record);
     // Keep last 50 queries locally
     localStorage.setItem(LOCAL_STORAGE_QUERIES_KEY, JSON.stringify(existing.slice(0, 50)));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('gatemaster:weak-topics-updated'));
+    }
   } catch (e) {
     console.warn('Failed to save query locally:', e);
   }
@@ -90,27 +107,47 @@ export async function solveProblemWithAI(prompt: string): Promise<SolveProblemRe
   const sessionId = getLocalSessionId();
   const trimmed = prompt.trim();
 
-  // If Supabase is not configured, immediately use cached demo fallback
-  if (!isSupabaseConfigured || !supabase) {
-    const fallback = getFallbackResponseForPrompt(trimmed);
+  // 1. Check if ?demo=1 URL flag is active (Forces cached mode for reliable recording)
+  if (isDemoModeForced()) {
+    const cached = getCachedResponse(trimmed) || getFallbackResponseForPrompt(trimmed);
     const record: StoredQueryRecord = {
       id: crypto.randomUUID(),
       sessionId,
       prompt: trimmed,
-      topic: fallback.topic,
-      conceptTags: fallback.concept_tags,
+      topic: cached.topic,
+      conceptTags: cached.concept_tags,
       createdAt: new Date().toISOString(),
     };
     logQueryLocally(record);
 
     return {
-      data: fallback,
+      data: cached,
       isOfflineDemo: true,
-      error: 'Supabase credentials not configured in environment. Using offline demo model.',
+      error: 'Demo URL mode active (?demo=1). Loaded verified cached response.',
     };
   }
 
-  // Attempt live Edge Function with 8-second AbortController timeout
+  // 2. If Supabase is not configured, immediately use cached demo fallback
+  if (!isSupabaseConfigured || !supabase) {
+    const cached = getCachedResponse(trimmed) || getFallbackResponseForPrompt(trimmed);
+    const record: StoredQueryRecord = {
+      id: crypto.randomUUID(),
+      sessionId,
+      prompt: trimmed,
+      topic: cached.topic,
+      conceptTags: cached.concept_tags,
+      createdAt: new Date().toISOString(),
+    };
+    logQueryLocally(record);
+
+    return {
+      data: cached,
+      isOfflineDemo: true,
+      error: 'Supabase credentials unconfigured. Using offline demo model.',
+    };
+  }
+
+  // 3. Attempt live Edge Function with 8-second AbortController timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
@@ -151,12 +188,32 @@ export async function solveProblemWithAI(prompt: string): Promise<SolveProblemRe
     clearTimeout(timeoutId);
     const isTimeout = err instanceof DOMException && err.name === 'AbortError';
     const errorMsg = isTimeout
-      ? 'Edge function timed out after 8s. Loaded cached response.'
+      ? 'Edge function timed out after 8s. Loaded verified cached response.'
       : err instanceof Error
       ? err.message
       : 'Network error';
 
-    // Fall back to offline cached response
+    // Fall back to offline cached response if matched
+    const cached = getCachedResponse(trimmed);
+    if (cached) {
+      const record: StoredQueryRecord = {
+        id: crypto.randomUUID(),
+        sessionId,
+        prompt: trimmed,
+        topic: cached.topic,
+        conceptTags: cached.concept_tags,
+        createdAt: new Date().toISOString(),
+      };
+      logQueryLocally(record);
+
+      return {
+        data: cached,
+        isOfflineDemo: true,
+        error: errorMsg,
+      };
+    }
+
+    // If no direct cached match, fallback to keyword matcher or throw friendly error
     const fallback = getFallbackResponseForPrompt(trimmed);
     const record: StoredQueryRecord = {
       id: crypto.randomUUID(),

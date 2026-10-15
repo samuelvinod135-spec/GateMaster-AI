@@ -255,3 +255,20 @@ describe('Fallback and Weak Topics Service', () => {
     expect(weak[0].count).toBe(3);
   });
 });
+
+describe('Task 3: Cached Responses Schema Validation', () => {
+  it('validates that EVERY response in CACHED_AI_RESPONSES strictly matches AIProblemResponseSchema', async () => {
+    const { CACHED_AI_RESPONSES, getCachedResponse } = await import('../data/cachedResponses');
+    for (const [key, resp] of Object.entries(CACHED_AI_RESPONSES)) {
+      const parsed = AIProblemResponseSchema.safeParse(resp);
+      expect(parsed.success, `Cached response for '${key}' failed schema validation`).toBe(true);
+      expect(resp.steps.length).toBeGreaterThan(0);
+      expect(resp.title.length).toBeGreaterThan(0);
+    }
+
+    // Test normalized retrieval
+    expect(getCachedResponse('Rotate 90 degrees then shear!')).toBeTruthy();
+    expect(getCachedResponse('Design a Half-Adder.')).toBeTruthy();
+    expect(getCachedResponse('What does a determinant of 0 mean?')).toBeTruthy();
+  });
+});
