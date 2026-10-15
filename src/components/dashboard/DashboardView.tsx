@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppView, Matrix2x2, LogicInputs } from '../../types';
 import { AIProblemBox } from '../ai/AIProblemBox';
+import { WeakTopicsPanel } from './WeakTopicsPanel';
 import { Grid, Network, Trophy, Cpu, Zap, Cloud, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -108,6 +109,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           loadMatrixPreset={loadMatrixPreset}
           setLogicInputsState={setLogicInputsState}
         />
+        <WeakTopicsPanel setView={setView} />
       </section>
 
       {/* Dual Engine Launch Cards */}

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { Matrix2x2, LogicInputs, EngineMode, HalfAdderOutputs } from '../types';
 import { calculateDeterminant, isDeterminantZero } from '../lib/math';
+import { logChallengeAttempt } from '../services/challengeTracker';
 
 export const INITIAL_MATRIX: Matrix2x2 = {
   a: 2.0,
@@ -46,6 +47,7 @@ export function useGateMasterStore() {
       const det = calculateDeterminant(next);
       if (isDeterminantZero(det) && !laChallengeSolved) {
         setLaChallengeSolved(true);
+        void logChallengeAttempt('la-collapse', 'linear_algebra', ['determinant', 'collapse'], true, 1);
         setCelebrationMessage('Challenge Solved! 2D Space Collapsed! 🎉');
         setShowCelebration(true);
         fireConfetti();
@@ -60,6 +62,7 @@ export function useGateMasterStore() {
     const det = calculateDeterminant(preset);
     if (isDeterminantZero(det) && !laChallengeSolved) {
       setLaChallengeSolved(true);
+      void logChallengeAttempt('la-collapse', 'linear_algebra', ['determinant', 'collapse'], true, 1);
       setCelebrationMessage('Challenge Solved! 2D Space Collapsed! 🎉');
       setShowCelebration(true);
       fireConfetti();
@@ -79,6 +82,7 @@ export function useGateMasterStore() {
       const carry = next.a && next.b;
       if (carry && !dlChallengeSolved) {
         setDlChallengeSolved(true);
+        void logChallengeAttempt('dl-carry', 'digital_logic', ['half_adder', 'and', 'carry'], true, 1);
         setCelebrationMessage('Challenge Solved! Carry Bit Generated! 🎉');
         setShowCelebration(true);
         fireConfetti();
