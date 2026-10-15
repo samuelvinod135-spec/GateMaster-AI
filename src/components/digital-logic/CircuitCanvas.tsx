@@ -54,38 +54,50 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
       }
 
       // ========================================================
-      // Responsive Dynamic Centering & Layout Calculation
+      // Precise Schematic Geometry & Layout
       // ========================================================
       const centerY = height / 2;
-      const verticalGap = Math.max(110, Math.min(150, height * 0.28));
+      const verticalGap = Math.max(115, Math.min(155, height * 0.28));
 
-      // Separate gates with massive breathing room (220px to 300px apart)
+      // Separate gates with generous vertical breathing room
       const xorGateY = centerY - verticalGap;
       const andGateY = centerY + verticalGap;
 
-      // Pin Y positions
+      // Pin Y positions (16px above and below gate centerlines)
       const pinOffset = 16;
       const xorPin1Y = xorGateY - pinOffset;
       const xorPin2Y = xorGateY + pinOffset;
       const andPin1Y = andGateY - pinOffset;
       const andPin2Y = andGateY + pinOffset;
 
-      // Inputs A and B are horizontally aligned with XOR inputs
+      // Inputs A and B are aligned with XOR input pins
       const inputAY = xorPin1Y;
       const inputBY = xorPin2Y;
 
-      // Horizontal Layout Alignment (Centered in Viewport)
-      const schematicWidth = Math.min(680, width * 0.88);
+      // Horizontal Layout Alignment
+      const schematicWidth = Math.min(700, width * 0.88);
       const startX = Math.max(30, (width - schematicWidth) / 2);
 
       const inputX = startX + 40;
-      const branchAX = startX + 175;  // Bus line dropping down to AND Pin 1
-      const branchBX = startX + 225;  // Bus line dropping down to AND Pin 2
-      const gateInX = startX + 310;   // Left edge of gates
-      const gateCenterX = startX + 355;
-      const gateOutX = startX + 400;  // Right output edge of gates
-      const outputX = startX + schematicWidth - 30;
+      const branchAX = startX + 175;  // Vertical drop bus for Input A
+      const branchBX = startX + 225;  // Vertical drop bus for Input B
 
+      // Gate center X
+      const gateCenterX = startX + 370;
+
+      // Exact pin connection X coordinates derived analytically:
+      // XOR Exclusive Arc: quadratic curve from (-34, -28) with control point (-14, 0) to (-34, 28)
+      // At y = +-16, x = -34 + 10 * (1 - (16/28)^2) = -34 + 6.7347 = -27.27
+      const xorInPinX = gateCenterX - 27.27;
+      // XOR sharp output tip is at x = +35 relative to gate center
+      const xorOutPinX = gateCenterX + 35;
+
+      // AND flat back is at x = -25 relative to gate center
+      const andInPinX = gateCenterX - 25;
+      // AND rounded output tip is at x = +31 relative to gate center
+      const andOutPinX = gateCenterX + 31;
+
+      const outputX = startX + schematicWidth - 30;
       const sumY = xorGateY;
       const carryY = andGateY;
 
@@ -125,17 +137,17 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
       // ========================================================
       // 1. Orthogonal Wire Routing for Input A
       // ========================================================
-      // Main Line A: Input A -> XOR Pin 1 (straight horizontal)
+      // Main Line A: Input A -> stops exactly at XOR Exclusive Arc
       drawWire([
         [inputX, inputAY],
-        [gateInX, xorPin1Y]
+        [xorInPinX, inputAY]
       ], inputs.a, '#38bdf8');
 
       // Branch A: Drops down vertically at branchAX to AND Pin 1
       drawWire([
         [branchAX, inputAY],
         [branchAX, andPin1Y],
-        [gateInX, andPin1Y]
+        [andInPinX, andPin1Y]
       ], inputs.a, '#38bdf8');
 
       // Junction Dot for Branch A
@@ -144,16 +156,16 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
       // ========================================================
       // 2. Orthogonal Wire Routing for Input B
       // ========================================================
-      // Main Line B: Input B -> XOR Pin 2 (straight horizontal)
-      // Note: At branchAX, line B crosses wire A. We draw a clean bridge arc.
+      // Main Line B: Input B -> stops exactly at XOR Exclusive Arc
+      // Jumper arc over vertical wire A at branchAX
       const bridgeRadius = 6;
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(inputX, inputBY);
       ctx.lineTo(branchAX - bridgeRadius, inputBY);
-      // Bridge arc over vertical wire A
+      // Clean schematic bridge arc
       ctx.arc(branchAX, inputBY, bridgeRadius, Math.PI, 0, false);
-      ctx.lineTo(gateInX, xorPin2Y);
+      ctx.lineTo(xorInPinX, inputBY);
 
       if (inputs.b) {
         ctx.strokeStyle = '#38bdf8';
@@ -172,87 +184,114 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
       drawWire([
         [branchBX, inputBY],
         [branchBX, andPin2Y],
-        [gateInX, andPin2Y]
+        [andInPinX, andPin2Y]
       ], inputs.b, '#38bdf8');
 
       // Junction Dot for Branch B
       drawJunction(branchBX, inputBY, inputs.b, '#38bdf8');
 
       // ========================================================
-      // 3. Output Wires (Clean straight horizontal lines to LEDs)
+      // 3. Output Wires (Starting exactly at gate output tips)
       // ========================================================
-      // XOR Output -> Sum LED
+      // XOR Output Tip -> Sum LED
       drawWire([
-        [gateOutX, sumY],
+        [xorOutPinX, sumY],
         [outputX, sumY]
       ], outputs.sum, '#38bdf8');
 
-      // AND Output -> Carry LED
+      // AND Output Tip -> Carry LED
       drawWire([
-        [gateOutX, carryY],
+        [andOutPinX, carryY],
         [outputX, carryY]
       ], outputs.carry, '#facc15');
 
       // ========================================================
-      // 4. Draw XOR Gate (Centered at gateCenterX, xorGateY)
+      // 4. Authentic IEEE Standard XOR Gate
       // ========================================================
       const drawXORGate = (cx: number, cy: number, isActive: boolean) => {
         ctx.save();
         ctx.translate(cx, cy);
 
-        ctx.fillStyle = isActive ? 'rgba(56, 189, 248, 0.12)' : '#0f172a';
-        ctx.strokeStyle = isActive ? '#38bdf8' : '#475569';
         ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const strokeColor = isActive ? '#38bdf8' : '#475569';
+        const fillColor = isActive ? 'rgba(56, 189, 248, 0.12)' : '#0f172a';
+
         if (isActive) {
           ctx.shadowColor = '#38bdf8';
           ctx.shadowBlur = 14;
+        } else {
+          ctx.shadowBlur = 0;
         }
 
-        // Curved input back
+        // --- 1. The Exclusive Arc (Detached Standalone Curve at Left) ---
+        // Sits 9px to the left of the main body's curved back.
+        // At y = +-16, x = -27.27 (where inputs A and B terminate).
+        ctx.strokeStyle = strokeColor;
         ctx.beginPath();
-        ctx.arc(-45, 0, 48, -Math.PI / 3, Math.PI / 3, false);
+        ctx.moveTo(-34, -28);
+        ctx.quadraticCurveTo(-14, 0, -34, 28);
         ctx.stroke();
 
-        // Outer XOR body
+        // --- 2. The Main OR Body (9px Uniform Parallel Gap) ---
+        // Curved back edge perfectly parallels the exclusive arc (x_body = x_arc + 9):
+        // Apex is at x = -15.
+        // Top and bottom edges sweep cleanly into the sharp right tip at (35, 0).
+        ctx.fillStyle = fillColor;
         ctx.beginPath();
-        ctx.arc(-36, 0, 48, -Math.PI / 3, Math.PI / 3, false);
-        ctx.quadraticCurveTo(5, -35, 45, 0);
-        ctx.quadraticCurveTo(5, 35, -36 + 48 * Math.cos(Math.PI / 3), 48 * Math.sin(Math.PI / 3));
+        // Top-left horn
+        ctx.moveTo(-25, -28);
+        // Back concave edge curving inward to apex at x = -15
+        ctx.quadraticCurveTo(-5, 0, -25, 28);
+        // Bottom sweeping edge to sharp right tip at (35, 0)
+        ctx.bezierCurveTo(0, 28, 22, 16, 35, 0);
+        // Top sweeping edge from tip back to top-left horn
+        ctx.bezierCurveTo(22, -16, 0, -28, -25, -28);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Label
+        // --- 3. Crisp Typographic Label ---
         ctx.fillStyle = isActive ? '#38bdf8' : '#94a3b8';
         ctx.font = '700 12px "JetBrains Mono", monospace';
         ctx.textAlign = 'center';
         ctx.shadowBlur = 0;
-        ctx.fillText('XOR', 0, 4);
+        ctx.fillText('XOR', 6, 4);
 
         ctx.restore();
       };
 
       // ========================================================
-      // 5. Draw AND Gate (Centered at gateCenterX, andGateY)
+      // 5. Authentic IEEE Standard AND Gate
       // ========================================================
       const drawANDGate = (cx: number, cy: number, isActive: boolean) => {
         ctx.save();
         ctx.translate(cx, cy);
 
-        ctx.fillStyle = isActive ? 'rgba(250, 204, 21, 0.12)' : '#0f172a';
-        ctx.strokeStyle = isActive ? '#facc15' : '#475569';
         ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const strokeColor = isActive ? '#facc15' : '#475569';
+        const fillColor = isActive ? 'rgba(250, 204, 21, 0.12)' : '#0f172a';
+
         if (isActive) {
           ctx.shadowColor = '#facc15';
           ctx.shadowBlur = 14;
+        } else {
+          ctx.shadowBlur = 0;
         }
 
-        // AND body (flat back, rounded front)
+        // AND Gate Body: Flat back at x = -25, rounded semicircle front from x = 5 to radius 26 (tip at 31)
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
         ctx.beginPath();
-        ctx.moveTo(-45, -32);
-        ctx.lineTo(-5, -32);
-        ctx.arc(-5, 0, 32, -Math.PI / 2, Math.PI / 2, false);
-        ctx.lineTo(-45, 32);
+        ctx.moveTo(-25, -26);
+        ctx.lineTo(5, -26);
+        ctx.arc(5, 0, 26, -Math.PI / 2, Math.PI / 2, false);
+        ctx.lineTo(-25, 26);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -262,7 +301,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({ inputs, outputs })
         ctx.font = '700 12px "JetBrains Mono", monospace';
         ctx.textAlign = 'center';
         ctx.shadowBlur = 0;
-        ctx.fillText('AND', -12, 4);
+        ctx.fillText('AND', -6, 4);
 
         ctx.restore();
       };
