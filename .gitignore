@@ -12,3 +12,8 @@ node_modules/
 dist/
 *.local
 .DS_Store
+
+# IDE and agent customization files
+.agents/
+.claude/
+skills-lock.json
